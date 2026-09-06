@@ -41,11 +41,12 @@ test("server-renders the Donghaeng Finance journey", async () => {
 });
 
 test("keeps the three-mission experience and demo route connected", async () => {
-  const [page, layout, scene, demo] = await Promise.all([
+  const [page, layout, scene, demo, admin] = await Promise.all([
     readFile(new URL("../app/page.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/layout.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/components/ThreeMissionRoadScene.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/demo/page.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/admin/page.tsx", import.meta.url), "utf8"),
   ]);
 
   const missionSource = page.slice(0, page.indexOf("export default function"));
@@ -59,4 +60,6 @@ test("keeps the three-mission experience and demo route connected", async () => 
   assert.match(layout, /동행금융 \| 다시 금융과 만나는 세 걸음/);
   assert.match(demo, /퀘스트 길로 돌아가기/);
   assert.match(demo, /WorkspaceTopbar active="interview"/);
+  assert.match(admin, /WorkspaceTopbar active="admin" saving=\{busy\}/);
+  assert.doesNotMatch(admin, /saving=\{busy \|\| dirty\}/);
 });
