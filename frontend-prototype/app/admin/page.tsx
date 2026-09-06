@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useMemo, useState, useSyncExternalStore } from "react";
+import WorkspaceTopbar from "../components/WorkspaceTopbar";
 import { INTERVIEW_CATEGORIES, OPERATING_DAY_SCENARIO } from "../demo/scenario";
 
 interface SavedAnswer {
@@ -48,15 +49,7 @@ export default function AdminPage() {
 
   return (
     <main className="admin-console">
-      <header className="admin-console-topbar">
-        <Link href="/" className="admin-console-brand" onClick={(event) => { event.preventDefault(); window.location.assign("/"); }}>동행금융 <span>운영센터</span></Link>
-        <nav aria-label="관리자 메뉴">
-          <Link href="/admin" aria-current="page">상담 관리</Link>
-          <Link href="/demo">인터뷰 화면</Link>
-          <Link href="/">퀘스트 길</Link>
-        </nav>
-        <div className="admin-manager"><span>운영 담당자</span><i>동</i></div>
-      </header>
+      <WorkspaceTopbar active="admin" />
 
       <div className="admin-console-shell">
         <aside className="admin-directory">

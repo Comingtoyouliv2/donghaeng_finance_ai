@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import type { KeyboardEvent } from "react";
 import MosaicCurtain from "../components/MosaicCurtain";
+import WorkspaceTopbar from "../components/WorkspaceTopbar";
 import { INTERVIEW_CATEGORIES, OPERATING_DAY_SCENARIO } from "./scenario";
 
 interface AcceptedAnswer {
@@ -87,14 +88,7 @@ export default function DemoPage() {
 
   return (
     <main className="human-call consultation-chat">
-      <header className="human-call-sitebar consultation-topbar">
-        <Link href="/" className="human-call-brand" onClick={(event) => { event.preventDefault(); window.location.assign("/"); }}>동행금융</Link>
-        <span>RECOVERY INTERVIEW</span>
-        <nav aria-label="상담 화면 메뉴">
-          <Link href="/admin" onClick={(event) => { event.preventDefault(); window.location.assign("/admin"); }}>관리자 대시보드</Link>
-          <Link href="/" onClick={(event) => { event.preventDefault(); window.location.assign("/"); }}>상담 나가기</Link>
-        </nav>
-      </header>
+      <WorkspaceTopbar active="interview" />
 
       <div className="consultation-workspace">
         <section className="phone-shell consultation-thread-shell" aria-label="금융 상담 대화">
