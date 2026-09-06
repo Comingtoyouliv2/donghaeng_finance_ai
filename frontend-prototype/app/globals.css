@@ -585,6 +585,11 @@ a,button { font:inherit; } a { color:inherit; } button { cursor:pointer; }
 }
 
 /* Consultation room: a quiet human record, not a generic assistant chat. */
+.record-status { margin:0; padding:10px 24px; color:#52695d; font-size:13px; line-height:1.5; }
+.record-status button { margin-left:12px; padding:6px 12px; border:1px solid #cad4c7; background:#fff; color:#214d40; cursor:pointer; }
+.admin-metrics .admin-answer-metric p { margin-top:16px; color:#29473c; font-size:14px; line-height:1.6; overflow-wrap:anywhere; }
+.admin-case-summary dd,.admin-transcript blockquote { overflow-wrap:anywhere; }
+.admin-plan-note button:disabled { opacity:.5; cursor:wait; }
 .workspace-topbar { position:relative; z-index:30; display:grid; width:100vw; min-height:72px; grid-template-columns:1fr auto; align-items:center; margin-left:calc(50% - 50vw); padding:0 clamp(24px,4vw,68px); border-bottom:1px solid #cad4c7; background:#f8faf5; color:#173a32; }
 .workspace-topbar-brand { color:#173a32; font-family:var(--font-display),"Batang",serif; font-size:21px; font-weight:760; letter-spacing:-.055em; text-decoration:none; }
 .workspace-topbar nav { position:relative; display:grid; width:292px; height:46px; grid-template-columns:repeat(2,minmax(0,1fr)); align-items:stretch; padding:4px; border:1px solid #d3ddd0; border-radius:5px; background:#eef2ec; }

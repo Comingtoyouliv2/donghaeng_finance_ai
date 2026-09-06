@@ -7,20 +7,24 @@ type WorkspaceView = "admin" | "interview";
 
 interface WorkspaceTopbarProps {
   active: WorkspaceView;
+  saving?: boolean;
 }
 
-export default function WorkspaceTopbar({ active }: WorkspaceTopbarProps) {
+export default function WorkspaceTopbar({ active, saving = false }: WorkspaceTopbarProps) {
   const [movingTo, setMovingTo] = useState<WorkspaceView | null>(null);
   const visualActive = movingTo ?? active;
 
   function navigate(event: MouseEvent<HTMLAnchorElement>, destination: string) {
+    if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
     event.preventDefault();
+    if (saving) return;
     window.location.assign(destination);
   }
 
   function navigateWorkspace(event: MouseEvent<HTMLAnchorElement>, destination: string, target: WorkspaceView) {
+    if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
     event.preventDefault();
-    if (movingTo || target === active) return;
+    if (saving || movingTo || target === active) return;
     setMovingTo(target);
     window.setTimeout(() => window.location.assign(destination), 400);
   }
@@ -39,6 +43,7 @@ export default function WorkspaceTopbar({ active }: WorkspaceTopbarProps) {
         <span className="workspace-nav-indicator" aria-hidden="true" />
         <a
           href="/admin"
+          aria-disabled={saving || undefined}
           aria-current={active === "admin" ? "page" : undefined}
           onClick={(event) => navigateWorkspace(event, "/admin", "admin")}
         >
@@ -46,6 +51,7 @@ export default function WorkspaceTopbar({ active }: WorkspaceTopbarProps) {
         </a>
         <a
           href="/demo"
+          aria-disabled={saving || undefined}
           aria-current={active === "interview" ? "page" : undefined}
           onClick={(event) => navigateWorkspace(event, "/demo", "interview")}
         >

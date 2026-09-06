@@ -1,12 +1,12 @@
 "use client";
 
 import Image from "next/image";
-import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import type { KeyboardEvent } from "react";
 import MosaicCurtain from "../components/MosaicCurtain";
 import WorkspaceTopbar from "../components/WorkspaceTopbar";
 import { INTERVIEW_CATEGORIES, OPERATING_DAY_SCENARIO } from "./scenario";
+import { requestRecord } from "./record";
 
 interface AcceptedAnswer {
   questionId: string;
@@ -26,6 +26,32 @@ export default function DemoPage() {
   const [checked, setChecked] = useState(false);
   const [isComplete, setIsComplete] = useState(false);
   const [evidence, setEvidence] = useState<string[]>([]);
+  const [revision, setRevision] = useState(0);
+  const [ready, setReady] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const savingRef = useRef(false);
+  const [error, setError] = useState("");
+
+  async function loadInterview() {
+    setError("");
+    try {
+      let record = await requestRecord();
+      // Preserve completed interviews saved by the earlier browser-only demo.
+      if (record.answers.length === 0 && record.revision === 0) {
+        let previous;
+        try { previous = JSON.parse(sessionStorage.getItem("donghaeng-demo-interview") || "null"); } catch { /* No valid legacy record. */ }
+        if (previous?.scenarioId === scenario.id && Array.isArray(previous.answers) && previous.answers.length) {
+          record = await requestRecord({ kind: "interview", revision: record.revision, answers: previous.answers, complete: Boolean(previous.completedAt) });
+        }
+      }
+      setAnswers(record.answers);
+      setRevision(record.revision);
+      setIsComplete(Boolean(record.completedAt));
+      setReady(true);
+    } catch (e) { setError(e instanceof Error ? e.message : "기록을 불러오지 못했습니다."); }
+  }
+
+  useEffect(() => { void loadInterview(); }, []);
 
   const currentIndex = answers.length;
   const current = questions[currentIndex];
@@ -53,47 +79,54 @@ export default function DemoPage() {
     threadRef.current?.scrollTo({ top: threadRef.current.scrollHeight, behavior: "smooth" });
   }, [answers.length, isReplying, isComplete]);
 
-  function sendAnswer() {
+  async function sendAnswer() {
     const message = answer.trim();
-    if (!message || !current || isReplying || isComplete) return;
+    if (!message || !current || isReplying || isComplete || !ready || savingRef.current) return;
+    savingRef.current = true;
+    setSaving(true);
+    setError("");
+    try {
+      const record = await requestRecord({ kind: "interview", revision, answers: [...answers, { questionId: current.id, text: message }], complete: false });
+      setAnswers(record.answers);
+      setRevision(record.revision);
 
-    setAnswers((items) => [...items, { questionId: current.id, text: message }]);
     setAnswer("");
     setChecked(false);
     setIsReplying(true);
     replyTimerRef.current = window.setTimeout(() => setIsReplying(false), 560);
+    } catch (e) { setError(e instanceof Error ? e.message : "답변 저장에 실패했습니다."); }
+    finally { savingRef.current = false; setSaving(false); }
   }
 
   function handleComposerKeyDown(event: KeyboardEvent<HTMLTextAreaElement>) {
-    if (event.key === "Enter" && !event.shiftKey) {
+    if (event.key === "Enter" && !event.shiftKey && !event.nativeEvent.isComposing) {
       event.preventDefault();
       sendAnswer();
     }
   }
 
-  function completeInterview() {
-    if (!checked || answers.length !== questions.length) return;
-    setIsComplete(true);
+  async function completeInterview() {
+    if (!checked || answers.length !== questions.length || savingRef.current) return;
+    savingRef.current = true;
+    setSaving(true);
+    setError("");
     try {
-      window.sessionStorage.setItem("donghaeng-demo-interview", JSON.stringify({
-        scenarioId: scenario.id,
-        persona: scenario.persona,
-        answers,
-        completedAt: new Date().toISOString(),
-      }));
-    } catch {
-      // Completion remains available even when browser storage is unavailable.
-    }
+      const record = await requestRecord({ kind: "interview", revision, answers, complete: true });
+      setRevision(record.revision);
+      setIsComplete(Boolean(record.completedAt));
+    } catch (e) { setError(e instanceof Error ? e.message : "완료 기록 저장에 실패했습니다."); }
+    finally { savingRef.current = false; setSaving(false); }
   }
 
   return (
     <main className="human-call consultation-chat">
-      <WorkspaceTopbar active="interview" />
+      <WorkspaceTopbar active="interview" saving={saving} />
+      <div className="record-status" role="status">{error || (!ready ? "저장된 인터뷰를 불러오는 중입니다." : saving ? "답변 저장 중…" : "보낸 답변은 자동 저장되어 관리자 화면에 반영됩니다.")}{error && !ready && <button onClick={loadInterview}>다시 불러오기</button>}</div>
 
       <div className="consultation-workspace">
         <section className="phone-shell consultation-thread-shell" aria-label="금융 상담 대화">
           <header className="phone-header">
-            <Link href="/" className="phone-back" aria-label="퀘스트 길로 돌아가기">‹</Link>
+            <a href="/" className="phone-back" aria-label="퀘스트 길로 돌아가기">‹</a>
             <div className="caller-profile">
               <Image src="/interviewer-yujin.png" alt="" width={42} height={42} />
               <div><strong>유진 상담 매니저</strong><span>{scenario.persona.businessName} 회복 인터뷰</span></div>
@@ -141,7 +174,7 @@ export default function DemoPage() {
             {isComplete && (
               <div className="spoken incoming current consultation-finish-message">
                 <Image src="/interviewer-yujin.png" alt="" width={42} height={42} />
-                <div><p>인터뷰가 기록됐어요. 영업일 감소 사유와 6개월 안에 월 29일 영업이라는 목표를 중심으로 다음 상담 자료를 준비하겠습니다.</p><small>유진 상담 매니저</small></div>
+                <div><p>인터뷰가 기록됐어요. 말씀해 주신 현재 상황과 계획을 관리자 대시보드에서 확인할 수 있습니다.</p><small>유진 상담 매니저</small></div>
               </div>
             )}
           </div>
@@ -151,12 +184,12 @@ export default function DemoPage() {
               <>
                 <div className="scenario-reply" aria-label="시나리오 답변">
                   <span>시연 답변</span>
-                  <button type="button" className={answer === current.suggestedAnswer ? "selected" : ""} onClick={() => setAnswer(current.suggestedAnswer)}>{current.suggestedAnswer}</button>
+                  <button type="button" disabled={!ready || saving} className={answer === current.suggestedAnswer ? "selected" : ""} onClick={() => setAnswer(current.suggestedAnswer)}>{current.suggestedAnswer}</button>
                 </div>
                 <label className="reply-input">
                   <span className="sr-only">상담 답변 입력</span>
-                  <textarea value={answer} onChange={(event) => setAnswer(event.target.value)} onKeyDown={handleComposerKeyDown} placeholder="상황을 편하게 적어주세요" rows={2} maxLength={3000} />
-                  <button type="button" onClick={sendAnswer} disabled={!answer.trim()}>보내기</button>
+                  <textarea disabled={!ready || saving} value={answer} onChange={(event) => setAnswer(event.target.value)} onKeyDown={handleComposerKeyDown} placeholder="상황을 편하게 적어주세요" rows={2} maxLength={3000} />
+                  <button type="button" onClick={sendAnswer} disabled={!answer.trim() || !ready || saving}>{saving ? "저장 중" : "보내기"}</button>
                 </label>
               </>
             ) : isReplying ? (
@@ -165,10 +198,10 @@ export default function DemoPage() {
               <div className="consultation-review">
                 <p>12개 답변을 원문 그대로 확인했습니다. 완료하면 이 기록으로 회복 근거를 정리합니다.</p>
                 <label><input type="checkbox" checked={checked} onChange={(event) => setChecked(event.target.checked)} /> 답변 내용이 맞는지 확인했어요.</label>
-                <button type="button" onClick={completeInterview} disabled={!checked}>인터뷰 완료하기 →</button>
+                <button type="button" onClick={completeInterview} disabled={!checked || saving}>{saving ? "저장 중…" : "인터뷰 완료하기 →"}</button>
               </div>
             ) : (
-              <div className="consultation-complete"><i aria-hidden="true">✓</i><div><strong>상담 대화가 안전하게 기록되었습니다</strong><span>이 기록을 바탕으로 결과와 다음 동행을 준비합니다.</span></div></div>
+              <div className="consultation-complete"><i aria-hidden="true">✓</i><div><strong>상담 대화가 저장되었습니다</strong><a href="/admin">관리자 대시보드에서 기록 확인 →</a></div></div>
             )}
           </footer>
         </section>
