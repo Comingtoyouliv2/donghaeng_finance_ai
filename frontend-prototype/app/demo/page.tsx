@@ -1,9 +1,9 @@
 "use client";
+/* eslint-disable @next/next/no-html-link-for-pages -- Full-page navigation is intentional for the deployed vinext app. */
 
 import Image from "next/image";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { KeyboardEvent } from "react";
-import MosaicCurtain from "../components/MosaicCurtain";
 import WorkspaceTopbar from "../components/WorkspaceTopbar";
 import { INTERVIEW_CATEGORIES, OPERATING_DAY_SCENARIO } from "./scenario";
 import { requestRecord } from "./record";
@@ -32,7 +32,7 @@ export default function DemoPage() {
   const savingRef = useRef(false);
   const [error, setError] = useState("");
 
-  async function loadInterview() {
+  const loadInterview = useCallback(async function loadInterview() {
     setError("");
     try {
       let record = await requestRecord();
@@ -49,9 +49,12 @@ export default function DemoPage() {
       setIsComplete(Boolean(record.completedAt));
       setReady(true);
     } catch (e) { setError(e instanceof Error ? e.message : "기록을 불러오지 못했습니다."); }
-  }
+  }, [scenario.id]);
 
-  useEffect(() => { void loadInterview(); }, []);
+  useEffect(() => {
+    const initial = window.setTimeout(() => void loadInterview(), 0);
+    return () => window.clearTimeout(initial);
+  }, [loadInterview]);
 
   const currentIndex = answers.length;
   const current = questions[currentIndex];
@@ -207,15 +210,14 @@ export default function DemoPage() {
         </section>
 
         <aside className="consultation-context" aria-label="인터뷰 수집 현황">
-          <header><span>DEMO SCENARIO</span><h1>{scenario.persona.businessName}</h1><p>{scenario.persona.borrowerName} 사장님 · {scenario.persona.industryLabel}</p></header>
-          <section className="consultation-focus-card"><span>이번 인터뷰의 핵심</span><strong>문 여는 날을<br />다시 늘리는 계획</strong><dl><div><dt>현재</dt><dd>월 {scenario.focus.baselineOperatingDays}일</dd></div><div><dt>목표</dt><dd>월 {scenario.focus.targetOperatingDays}일</dd></div><div><dt>기간</dt><dd>{scenario.focus.horizonMonths}개월</dd></div><div><dt>예산</dt><dd>80만원</dd></div></dl></section>
-          <section className="consultation-map"><div><span>BUSINESS MAP</span><b>{answers.length}/{questions.length}</b></div>{INTERVIEW_CATEGORIES.map((category) => { const total = questions.filter((item) => item.category === category).length; const done = answers.filter((item) => questions.find((question) => question.id === item.questionId)?.category === category).length; return <article key={category}><header><strong>{category}</strong><span>{done}/{total}</span></header><i aria-hidden="true"><b style={{ transform: `scaleX(${done / total})` }} /></i></article>; })}</section>
-          <p className="consultation-score-note"><strong>시연 검증 기준</strong>같은 거래 데이터에서 사유와 목표가 확인되면 개선가능성은 30.0에서 67.5로 달라집니다. 신용등급이나 승인 판단은 아닙니다.</p>
+          <header><span>회복 인터뷰</span><h1>{scenario.persona.businessName}</h1><p>{scenario.persona.borrowerName} 사장님 · {scenario.persona.industryLabel}</p></header>
+          <section className="consultation-focus-card"><span>함께 확인할 계획</span><strong>문 여는 날을<br />다시 늘리는 일</strong><dl><div><dt>현재</dt><dd>월 {scenario.focus.baselineOperatingDays}일</dd></div><div><dt>목표</dt><dd>월 {scenario.focus.targetOperatingDays}일</dd></div><div><dt>기간</dt><dd>{scenario.focus.horizonMonths}개월</dd></div><div><dt>준비 예산</dt><dd>80만원</dd></div></dl></section>
+          <section className="consultation-map"><div><span>답변 기록</span><b>{answers.length}/{questions.length}</b></div>{INTERVIEW_CATEGORIES.map((category) => { const total = questions.filter((item) => item.category === category).length; const done = answers.filter((item) => questions.find((question) => question.id === item.questionId)?.category === category).length; return <article key={category}><header><strong>{category}</strong><span>{done}/{total}</span></header><i aria-hidden="true"><b style={{ transform: `scaleX(${done / total})` }} /></i></article>; })}</section>
+          <p className="consultation-context-note">서두르지 않아도 괜찮습니다. 남긴 답변은 그대로 저장되고, 대화가 끝나면 담당자가 다음 상담을 준비합니다.</p>
         </aside>
       </div>
 
       <p className="human-call-note">입력한 답변은 다음 금융 상담을 준비하기 위한 근거입니다. 최종 금융 판단은 금융기관과 사람이 합니다.</p>
-      <MosaicCurtain mode="reveal" />
     </main>
   );
 }

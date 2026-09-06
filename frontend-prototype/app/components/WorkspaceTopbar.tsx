@@ -1,4 +1,5 @@
 "use client";
+/* eslint-disable @next/next/no-html-link-for-pages -- Full-page navigation preserves the transition on vinext. */
 
 import { useState } from "react";
 import type { MouseEvent } from "react";

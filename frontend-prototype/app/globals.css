@@ -745,3 +745,88 @@ a,button { font:inherit; } a { color:inherit; } button { cursor:pointer; }
 .admin-console :focus-visible { outline:3px solid rgba(101,133,109,.4); outline-offset:2px; }
 @media (max-width:1050px) { .admin-console-topbar { grid-template-columns:200px 1fr 140px; }.admin-console-shell { grid-template-columns:220px 1fr; }.admin-metrics { grid-template-columns:repeat(2,1fr); }.admin-summary-grid { grid-template-columns:1fr; }.admin-coverage { grid-column:auto; }.admin-plan-grid { grid-template-columns:1fr; } }
 @media (max-width:760px) { .workspace-topbar { min-height:62px; padding:0 16px; }.workspace-topbar-brand { font-size:18px; }.workspace-topbar nav { width:min(244px,67vw); height:44px; }.workspace-topbar nav a { font-size:11px; white-space:nowrap; }.admin-console-topbar { height:auto; min-height:62px; grid-template-columns:1fr auto; padding:0 16px; }.admin-console-topbar nav { grid-column:1/-1; grid-row:2; justify-content:flex-start; gap:22px; overflow:auto; }.admin-console-topbar nav a { min-height:38px; white-space:nowrap; }.admin-manager span { display:none; }.admin-console-shell { display:block; }.admin-directory { min-height:0; padding:18px 16px; border-right:0; border-bottom:1px solid #ccd6ca; }.admin-directory-note { display:none; }.admin-case-workspace { padding:24px 16px 42px; }.admin-case-heading { display:block; }.admin-case-actions { margin-top:18px; }.admin-metrics { grid-template-columns:1fr 1fr; }.admin-metrics article { min-height:112px; padding:14px; }.admin-record-tabs { overflow:auto; }.admin-record-tabs button { padding:0 13px; white-space:nowrap; }.admin-case-summary { padding:22px 18px; }.admin-case-summary>header { display:block; }.admin-review-badge { display:inline-block; margin-top:14px; }.admin-case-summary dl { grid-template-columns:1fr; }.admin-transcript { padding:22px 18px; }.admin-transcript>header { display:block; }.admin-transcript>header>p { margin-top:10px; text-align:left; }.admin-checklist,.admin-plan-note { padding:22px 18px; } }
+
+/* Cinematic workspace shared by the landing, interview and review surfaces. */
+.workspace-topbar { position:sticky; top:0; min-height:72px; padding:0 clamp(22px,3.8vw,58px); border-color:rgba(244,237,221,.16); background:rgba(22,24,20,.96); backdrop-filter:blur(16px); }
+.workspace-topbar-brand { font-size:27px; color:#f7f0df; }
+.workspace-topbar nav { width:304px; height:42px; padding:3px; border-color:rgba(244,237,221,.18); border-radius:2px; background:rgba(6,8,6,.34); }
+.workspace-nav-indicator { top:3px; bottom:3px; left:3px; width:calc((100% - 6px)/2); border:0; border-radius:1px; background:#eee5d3; }
+.workspace-topbar nav a { color:#b7b09f; font-size:13px; }
+.workspace-topbar nav[data-active="admin"] a[href="/admin"],.workspace-topbar nav[data-active="interview"] a[href="/demo"] { color:#282a24; }
+
+.consultation-chat { --call-paper:#f1eadc; --call-soft:#e8dfd0; --call-line:#c9bfad; --call-sand:#aa9270; --call-ink:#292b25; --call-muted:#766e60; position:relative; padding:0 0 18px; background:#171914; color:var(--call-ink); }
+.consultation-chat:before { content:""; position:fixed; z-index:0; inset:0; background:linear-gradient(90deg,rgba(15,17,14,.97) 0 52%,rgba(15,17,14,.8) 72%,rgba(15,17,14,.7)),url('/korean-alley-cafe-integrated-8k.webp') center 52%/cover no-repeat; filter:saturate(.7) contrast(1.08); pointer-events:none; }
+.consultation-chat>* { position:relative; z-index:1; }
+.consultation-chat .record-status { min-height:36px; margin:0; padding:9px clamp(22px,4vw,60px); border-bottom:1px solid rgba(244,237,221,.12); background:rgba(24,26,21,.88); color:#aaa391; font-size:12px; }
+.consultation-chat .record-status button { border:0; border-bottom:1px solid #b89459; background:transparent; color:#eadfc9; }
+.consultation-chat .consultation-workspace { width:min(1440px,calc(100% - 48px)); height:min(820px,calc(100svh - 126px)); min-height:640px; grid-template-columns:minmax(0,1fr) minmax(310px,360px); gap:0; padding-top:22px; }
+.consultation-chat .consultation-thread-shell { width:100%; height:100%; border:1px solid rgba(232,221,202,.55); border-radius:1px; background:#f1eadc; box-shadow:0 28px 90px rgba(0,0,0,.35); }
+.consultation-chat .phone-header { min-height:78px; padding-right:24px; border-color:#cfc5b4; background:#f1eadc; }
+.consultation-chat .phone-back { color:#514b40; }
+.consultation-chat .caller-profile img,.consultation-chat .spoken.incoming>img { border-color:#bfae94; }
+.consultation-chat .caller-profile strong { color:#272a24; font-family:var(--font-display),serif; font-size:17px; }
+.consultation-chat .caller-profile span,.consultation-chat .call-duration { color:#7c7467; }
+.consultation-chat .call-duration i { background:#b68a48; box-shadow:none; }
+.consultation-chat .call-status { min-height:42px; border-color:#cfc5b4; background:#e6ddce; color:#6e675b; }
+.consultation-chat .call-status span { color:#88683c; }
+.consultation-chat .consultation-status>div { border-radius:0; background:#d2c7b5; }
+.consultation-chat .consultation-status>div>i { background:#a77d3e; }
+.consultation-chat .call-thread { padding:30px clamp(20px,3vw,44px); scrollbar-color:#ad9f89 transparent; }
+.consultation-chat .spoken { max-width:82%; }
+.consultation-chat .spoken>div { padding:5px 0 5px 15px; border-radius:0; background:transparent; }
+.consultation-chat .spoken p { color:#393a33; font-size:15px; line-height:1.72; }
+.consultation-chat .spoken.current>div { border:0; border-left:2px solid #a77d3e; border-radius:0; background:transparent; }
+.consultation-chat .spoken.compact>div { border-radius:0; }
+.consultation-chat .spoken.compact p,.consultation-chat .spoken small { color:#81786a; }
+.consultation-chat .spoken.outgoing { max-width:72%; margin:24px 0 24px auto; }
+.consultation-chat .spoken.outgoing>p { padding:14px 17px; border:0; border-radius:1px; background:#ddd0bc; color:#34352f; }
+.consultation-chat .consultation-quest-context { margin:26px 0 32px 52px; padding:16px 0; border:0; border-top:1px solid #c7baa6; border-bottom:1px solid #c7baa6; border-radius:0; background:transparent; color:#665f53; }
+.consultation-chat .consultation-quest-context p { color:#736958; }
+.consultation-chat .consultation-quest-context p span { color:#a77d3e; }
+.consultation-chat .chat-typing { border-radius:0; background:transparent!important; }
+.consultation-chat .reply-dock { padding:14px clamp(16px,2.4vw,32px) 18px; border-color:#cfc5b4; background:#e9e0d1; }
+.consultation-chat .scenario-reply { grid-template-columns:84px 1fr; margin-bottom:12px; }
+.consultation-chat .scenario-reply>span { color:#80623a; }
+.consultation-chat .scenario-reply>button { padding:10px 14px; border:0; border-left:1px solid #ad8a55; border-radius:0; background:transparent; color:#5c5447; }
+.consultation-chat .scenario-reply>button:hover,.consultation-chat .scenario-reply>button.selected { border-color:#7f5e2f; background:rgba(167,125,62,.08); }
+.consultation-chat .reply-input { min-height:60px; border:1px solid #afa48f; border-radius:1px; background:#f5efe3; }
+.consultation-chat .reply-input textarea { color:#34352f; }
+.consultation-chat .reply-input button,.consultation-chat .consultation-review>button { min-width:76px; border-radius:1px; background:#30332b; color:#f8f0df; }
+.consultation-chat .consultation-complete { border-color:#bda77f; border-radius:1px; background:#dfd2bd; color:#34372f; }
+.consultation-chat .consultation-complete>i { border-radius:1px; background:#a77d3e; }
+.consultation-chat .consultation-context { position:relative; gap:0; padding:clamp(30px,4vw,52px) clamp(24px,3vw,38px); overflow:auto; border:1px solid rgba(235,224,203,.28); border-left:0; border-radius:0; background:linear-gradient(180deg,rgba(23,25,20,.86),rgba(18,20,16,.96)),url('/korean-alley-cafe-integrated-8k.webp') 62% center/cover no-repeat; color:#f2ead9; box-shadow:0 28px 90px rgba(0,0,0,.3); }
+.consultation-chat .consultation-context>header { padding-bottom:28px; border-bottom:1px solid rgba(242,234,217,.25); }
+.consultation-chat .consultation-context>header>span,.consultation-chat .consultation-focus-card>span,.consultation-chat .consultation-map>div>span { color:#d0a96e; font-family:var(--font-sans),sans-serif; font-size:11px; letter-spacing:.06em; }
+.consultation-chat .consultation-context>header h1 { margin:12px 0 7px; color:#fff7e6; font-size:clamp(30px,2.4vw,39px); font-weight:400; }
+.consultation-chat .consultation-context>header p { color:#bbb2a1; font-size:13px; }
+.consultation-chat .consultation-focus-card { padding:30px 0; border:0; border-bottom:1px solid rgba(242,234,217,.25); border-radius:0; background:transparent; }
+.consultation-chat .consultation-focus-card>strong { margin-top:12px; color:#f4ecda; font-size:25px; font-weight:400; line-height:1.48; }
+.consultation-chat .consultation-focus-card dl { gap:0; margin-top:26px; }
+.consultation-chat .consultation-focus-card dl div { padding:10px 0; border-color:rgba(242,234,217,.16); }
+.consultation-chat .consultation-focus-card dt { color:#948d7e; }
+.consultation-chat .consultation-focus-card dd { color:#eee4d1; font-weight:600; }
+.consultation-chat .consultation-map { padding:28px 0; border:0; border-radius:0; }
+.consultation-chat .consultation-map>div>b { color:#d8c6a7; }
+.consultation-chat .consultation-map article header strong { color:#d8d0c1; font-weight:500; }
+.consultation-chat .consultation-map article header span { color:#8f887b; }
+.consultation-chat .consultation-map article>i { border-radius:0; background:rgba(242,234,217,.14); }
+.consultation-chat .consultation-map article>i>b { background:#c99b58; }
+.consultation-context-note { margin:auto 0 0; padding-top:22px; border-top:1px solid rgba(242,234,217,.25); color:#a9a191; font-family:var(--font-display),serif; font-size:14px; line-height:1.8; }
+.consultation-chat .human-call-note { color:#9b9485; }
+
+@media (max-width:900px) {
+  .consultation-chat .consultation-workspace { width:min(100% - 32px,760px); height:auto; grid-template-columns:1fr; }
+  .consultation-chat .consultation-thread-shell { height:72svh; min-height:620px; }
+  .consultation-chat .consultation-context { min-height:520px; border-top:0; border-left:1px solid rgba(235,224,203,.28); }
+}
+@media (max-width:760px) {
+  .workspace-topbar,.consultation-chat .workspace-topbar { min-height:102px; grid-template-columns:1fr; gap:8px; padding:11px 18px; }
+  .workspace-topbar-brand,.consultation-chat .workspace-topbar-brand { font-size:23px; }
+  .workspace-topbar nav,.consultation-chat .workspace-topbar nav { width:100%; max-width:none; height:40px; }
+  .workspace-topbar nav a,.consultation-chat .workspace-topbar nav a { font-size:12px; }
+  .consultation-chat .record-status { padding:8px 16px; }
+  .consultation-chat .consultation-workspace { width:100%; padding-top:0; }
+  .consultation-chat .consultation-thread-shell { height:calc(100svh - 138px); min-height:560px; border-right:0; border-left:0; }
+  .consultation-chat .consultation-context { margin:0; border-right:0; border-left:0; }
+  .consultation-chat .scenario-reply { grid-template-columns:1fr; gap:4px; }
+}
