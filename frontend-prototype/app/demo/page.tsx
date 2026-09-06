@@ -12,7 +12,6 @@ interface AcceptedAnswer {
   text: string;
 }
 
-const journeySteps = ["함께 걷기", "사장님 인터뷰", "결과 확인", "다음 동행"];
 const fallbackEvidence = ["사업 공백의 이유 확인", "조정 가능한 지출 확인", "준비 가능한 증빙 확인"];
 
 export default function DemoPage() {
@@ -105,16 +104,6 @@ export default function DemoPage() {
         <span>AI RECOVERY CONSULTATION</span>
         <Link href="/">상담 나가기</Link>
       </header>
-
-      <div className="consultation-journey" aria-label="서비스 진행 단계">
-        <ol>
-          {journeySteps.map((item, index) => {
-            const active = isComplete ? 2 : 1;
-            return <li key={item} className={index === active ? "is-current" : index < active ? "is-done" : ""}><span>{index < active ? "✓" : `0${index + 1}`}</span><b>{item}</b></li>;
-          })}
-        </ol>
-        <p>골목에서 남긴 생각이 인터뷰 답변과 다음 금융 상담 준비로 이어집니다.</p>
-      </div>
 
       <div className="consultation-workspace">
         <section className="phone-shell consultation-thread-shell" aria-label="AI 금융 상담 채팅">
