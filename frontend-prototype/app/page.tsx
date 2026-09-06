@@ -154,23 +154,25 @@ export default function Home() {
           </div>
         </section>
 
-        <button
-          key={`quest-${mission}`}
-          type="button"
-          className={`mission-quest-marker quest-position-${mission}${answers[mission] ? " is-complete" : ""}`}
-          style={{ opacity: progress > 0.07 && progress < 0.84 && !isQuestOpen ? 1 : 0, pointerEvents: progress > 0.07 && progress < 0.84 && !isQuestOpen ? "auto" : "none" }}
-          onClick={() => setIsQuestOpen(true)}
-          aria-expanded={isQuestOpen}
-          aria-controls="mission-quest-dialog"
-          aria-label={`${active.quest} 퀘스트 ${answers[mission] ? "다시 보기" : "열기"}`}
-        >
-          <span className="mission-quest-beacon" aria-hidden="true"><i /></span>
-          <span className="mission-quest-copy" aria-hidden="true">
-            <small>{answers[mission] ? "QUEST CLEAR" : `QUEST ${String(mission + 1).padStart(2, "0")}`}</small>
-            <strong>{answers[mission] ? "퀘스트 다시 보기" : "퀘스트 열기"}</strong>
-            <em>{answers[mission] ? "수집한 근거를 확인하세요" : "눌러서 질문을 확인하세요"}</em>
-          </span>
-        </button>
+        <div className="mission-quest-anchor-layer">
+          <button
+            key={`quest-${mission}`}
+            type="button"
+            className={`mission-quest-marker quest-position-${mission}${answers[mission] ? " is-complete" : ""}`}
+            style={{ opacity: progress > 0.07 && progress < 0.84 && !isQuestOpen ? 1 : 0, pointerEvents: progress > 0.07 && progress < 0.84 && !isQuestOpen ? "auto" : "none" }}
+            onClick={() => setIsQuestOpen(true)}
+            aria-expanded={isQuestOpen}
+            aria-controls="mission-quest-dialog"
+            aria-label={`${active.quest} 퀘스트 ${answers[mission] ? "다시 보기" : "열기"}`}
+          >
+            <span className="mission-quest-beacon" aria-hidden="true"><i /></span>
+            <span className="mission-quest-copy" aria-hidden="true">
+              <small>{answers[mission] ? "QUEST CLEAR" : `QUEST ${String(mission + 1).padStart(2, "0")}`}</small>
+              <strong>{answers[mission] ? "퀘스트 다시 보기" : "퀘스트 열기"}</strong>
+              <em>{answers[mission] ? "수집한 근거를 확인하세요" : "눌러서 질문을 확인하세요"}</em>
+            </span>
+          </button>
+        </div>
 
         <section
           id="mission-quest-dialog"

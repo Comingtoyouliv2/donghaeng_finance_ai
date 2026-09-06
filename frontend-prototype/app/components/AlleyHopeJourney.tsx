@@ -27,6 +27,11 @@ export default function AlleyHopeJourney() {
     let lastFrameTime = performance.now();
     let lastScrollInput = 0;
 
+    const setRoadProperty = (name: string, value: string) => {
+      root.style.setProperty(name, value);
+      page.style.setProperty(name, value);
+    };
+
     const smoothstep = (value: number) => {
       const clamped = Math.max(0, Math.min(1, value));
       return clamped * clamped * (3 - 2 * clamped);
@@ -44,19 +49,18 @@ export default function AlleyHopeJourney() {
       const stepZoom = reduceMotion ? 0 : Math.abs(Math.sin(gait)) * motion * 0.0015;
       const stepSide = reduceMotion ? 0 : Math.sin(gait * 0.5) * motion * 5;
       const roadGlow = smoothstep((normalized - 0.06) / 0.76);
-      root.style.setProperty("--scene-progress", normalized.toFixed(4));
+      setRoadProperty("--scene-progress", normalized.toFixed(4));
       root.style.setProperty("--interior-reveal", interiorReveal.toFixed(4));
       root.style.setProperty("--arrival-glow", arrivalGlow.toFixed(4));
       root.style.setProperty("--road-glow", roadGlow.toFixed(4));
       root.style.setProperty("--near-blur", `${(2.8 - normalized * 1.8).toFixed(2)}px`);
-      root.style.setProperty("--walk-bob", `${stride.toFixed(3)}px`);
-      root.style.setProperty("--walk-sway", `${sway.toFixed(3)}px`);
+      setRoadProperty("--walk-bob", `${stride.toFixed(3)}px`);
+      setRoadProperty("--walk-sway", `${sway.toFixed(3)}px`);
       root.style.setProperty("--near-bob", `${(-stride * 0.3).toFixed(3)}px`);
-      root.style.setProperty("--walk-pitch", `${walkPitch.toFixed(3)}deg`);
-      root.style.setProperty("--step-zoom", stepZoom.toFixed(4));
+      setRoadProperty("--walk-pitch", `${walkPitch.toFixed(3)}deg`);
+      setRoadProperty("--step-zoom", stepZoom.toFixed(4));
       root.style.setProperty("--step-side", `${stepSide.toFixed(2)}px`);
-      root.style.setProperty("--camera-roll", `${(walkRoll + currentLookX * 0.018).toFixed(3)}deg`);
-      page.style.setProperty("--scene-progress", normalized.toFixed(4));
+      setRoadProperty("--camera-roll", `${(walkRoll + currentLookX * 0.018).toFixed(3)}deg`);
 
       const mission = normalized < 0.34 ? 0 : normalized < 0.68 ? 1 : 2;
       window.dispatchEvent(
@@ -90,8 +94,8 @@ export default function AlleyHopeJourney() {
       currentLookX += (targetLookX - currentLookX) * 0.055;
       currentLookY += (targetLookY - currentLookY) * 0.055;
       if (Math.abs(targetProgress - currentProgress) < 0.0001) currentProgress = targetProgress;
-      root.style.setProperty("--look-x", `${currentLookX.toFixed(2)}px`);
-      root.style.setProperty("--look-y", `${currentLookY.toFixed(2)}px`);
+      setRoadProperty("--look-x", `${currentLookX.toFixed(2)}px`);
+      setRoadProperty("--look-y", `${currentLookY.toFixed(2)}px`);
       root.style.setProperty("--look-far-x", `${(-currentLookX * 0.35).toFixed(2)}px`);
       root.style.setProperty("--look-far-y", `${(-currentLookY * 0.25).toFixed(2)}px`);
       root.style.setProperty("--look-road-x", `${(-currentLookX * 0.12).toFixed(2)}px`);
@@ -158,6 +162,13 @@ export default function AlleyHopeJourney() {
       root.style.removeProperty("--look-interior-y");
       root.style.removeProperty("--look-near-x");
       page.style.removeProperty("--scene-progress");
+      page.style.removeProperty("--walk-bob");
+      page.style.removeProperty("--walk-sway");
+      page.style.removeProperty("--walk-pitch");
+      page.style.removeProperty("--step-zoom");
+      page.style.removeProperty("--camera-roll");
+      page.style.removeProperty("--look-x");
+      page.style.removeProperty("--look-y");
     };
   }, []);
 

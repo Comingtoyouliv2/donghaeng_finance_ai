@@ -418,10 +418,12 @@ a,button { font:inherit; } a { color:inherit; } button { cursor:pointer; }
 .mission-road-detail dt { color:var(--road-gold); font-size:10px; font-weight:760; letter-spacing:-.02em; }
 .mission-road-detail dd { margin:0; color:rgba(255,248,232,.94); font-family:var(--font-display),"Batang",serif; font-size:clamp(16px,1.3vw,21px); font-weight:700; letter-spacing:-.035em; line-height:1.36; word-break:keep-all; }
 .mission-road-home.is-quest-open .mission-road-hud { opacity:0!important; pointer-events:none!important; transform:translateY(16px); }
-.mission-quest-marker { --quest-scale:1; position:absolute; z-index:13; display:flex; align-items:center; gap:11px; padding:8px 10px 12px 5px; border:0; background:transparent; color:var(--road-cream); cursor:pointer; text-align:left; transform:translate(-22px,-76px) scale(var(--quest-scale)); transform-origin:22px 76px; filter:drop-shadow(0 10px 14px rgba(12,18,15,.22)); transition:opacity .35s ease,transform .45s cubic-bezier(.16,1,.3,1),filter .3s ease; }
-.mission-quest-marker.quest-position-0 { --quest-scale:.94; top:68%; left:10%; }
-.mission-quest-marker.quest-position-1 { --quest-scale:.88; top:53%; left:72%; }
-.mission-quest-marker.quest-position-2 { --quest-scale:.8; top:43%; left:51%; }
+.mission-quest-anchor-layer { position:absolute; z-index:13; inset:-40%; pointer-events:none; transform:translate3d(calc(var(--walk-sway,0px) + var(--look-x,0px)),calc(var(--walk-bob,0px) + var(--look-y,0px)),0) rotateX(var(--walk-pitch,0deg)) rotateZ(var(--camera-roll,0deg)) scale(calc(.578 + var(--scene-progress,0) * .392 + var(--step-zoom,0))); transform-origin:50% 49%; will-change:transform; }
+.mission-quest-marker { --quest-scale:1; position:absolute; z-index:0; display:flex; align-items:center; gap:11px; padding:8px 10px 12px 5px; border:0; background:transparent; color:var(--road-cream); cursor:pointer; text-align:left; transform:translate(-22px,-76px) scale(var(--quest-scale)); transform-origin:22px 76px; filter:drop-shadow(0 10px 14px rgba(12,18,15,.22)); transition:opacity .35s ease,transform .45s cubic-bezier(.16,1,.3,1),filter .3s ease; }
+/* These anchors are coordinates on the 2:1 alley image, projected through background-size: cover. */
+.mission-quest-marker.quest-position-0 { --quest-scale:1.43; top:calc(93.6vh + max(12.42vw,24.84vh)); left:calc(90vw - max(48.78vw,97.56vh)); }
+.mission-quest-marker.quest-position-1 { --quest-scale:1.14; top:calc(93.6vh + max(.36vw,.72vh)); left:calc(90vw + max(22.68vw,45.36vh)); }
+.mission-quest-marker.quest-position-2 { --quest-scale:.92; top:calc(93.6vh - max(5.67vw,11.34vh)); left:calc(90vw + max(.9vw,1.8vh)); }
 .mission-quest-beacon { position:relative; display:block; width:44px; height:68px; flex:0 0 44px; animation:quest-marker-bob 1.45s cubic-bezier(.45,.05,.55,.95) infinite; }
 .mission-quest-beacon:before { content:""; position:absolute; top:5px; left:50%; width:28px; height:28px; border:2px solid rgba(255,248,232,.94); border-radius:5px; background:linear-gradient(135deg,#f6d58e 0 48%,#dcae5c 52% 100%); box-shadow:inset 0 0 0 4px rgba(47,44,36,.16),0 0 0 5px rgba(242,196,111,.12),0 5px 18px rgba(36,25,14,.38),0 0 26px rgba(242,196,111,.58); transform:translateX(-50%) rotate(45deg); transition:box-shadow .3s ease,filter .3s ease; }
 .mission-quest-beacon:after { content:""; position:absolute; bottom:1px; left:50%; width:42px; height:12px; border-radius:50%; background:radial-gradient(ellipse,rgba(242,196,111,.48),rgba(242,196,111,.12) 48%,transparent 72%); filter:blur(2px); transform:translateX(-50%); }
@@ -537,8 +539,9 @@ a,button { font:inherit; } a { color:inherit; } button { cursor:pointer; }
   .mission-road-detail { grid-template-columns:repeat(2,minmax(0,1fr)); gap:16px; }
   .mission-road-detail dt { font-size:9px; }
   .mission-road-detail dd { font-size:13px; line-height:1.42; }
-  .mission-quest-marker,.mission-quest-marker.quest-position-0,.mission-quest-marker.quest-position-1,.mission-quest-marker.quest-position-2 { --quest-scale:.9; top:38%; left:50%; transform:translate(-50%,-50%) scale(var(--quest-scale)); transform-origin:center; }
-  .mission-quest-marker:active { transform:translate(-50%,-50%) scale(calc(var(--quest-scale) * .96)); }
+  .mission-quest-marker.quest-position-0 { --quest-scale:1.35; }
+  .mission-quest-marker.quest-position-1 { --quest-scale:1.22; }
+  .mission-quest-marker.quest-position-2 { --quest-scale:1.08; }
   .mission-quest-beacon { width:40px; height:64px; flex-basis:40px; }
   .mission-quest-copy { min-width:158px; }
   .mission-quest-copy strong { font-size:16px; }
@@ -587,5 +590,5 @@ a,button { font:inherit; } a { color:inherit; } button { cursor:pointer; }
   .mission-road-scroll-cue i:after { animation:none; }
   .mission-road-hud { animation:none; }
   .mission-quest-beacon,.mission-quest-copy { animation:none; }
-  .alley-hope-road,.alley-hope-destination-light,.alley-hope-road-light,.alley-hope-threshold,.alley-hope-interior,.alley-hope-near-field,.alley-hope-body-shadow { transform:none; }
+  .alley-hope-road,.mission-quest-anchor-layer,.alley-hope-destination-light,.alley-hope-road-light,.alley-hope-threshold,.alley-hope-interior,.alley-hope-near-field,.alley-hope-body-shadow { transform:none; }
 }
