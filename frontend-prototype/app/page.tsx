@@ -137,7 +137,7 @@ export default function Home() {
         </Suspense>
 
         <header className="mission-road-nav">
-          <Link href="/" className="mission-road-brand" aria-label="동행금융 첫 화면으로">동행금융</Link>
+          <Link href="/" className="mission-road-brand" aria-label="동행금융 첫 화면으로" onClick={(event) => { event.preventDefault(); window.location.assign("/"); }}>동행금융</Link>
           <div className="mission-road-nav-actions">
             <p>{`퀘스트 ${completedQuests} / ${missions.length} · 회복 근거 수집 중`}</p>
             <a href="/admin">관리자</a>

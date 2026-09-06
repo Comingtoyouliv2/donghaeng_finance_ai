@@ -49,7 +49,7 @@ export default function AdminPage() {
   return (
     <main className="admin-console">
       <header className="admin-console-topbar">
-        <Link href="/" className="admin-console-brand">동행금융 <span>운영센터</span></Link>
+        <Link href="/" className="admin-console-brand" onClick={(event) => { event.preventDefault(); window.location.assign("/"); }}>동행금융 <span>운영센터</span></Link>
         <nav aria-label="관리자 메뉴">
           <Link href="/admin" aria-current="page">상담 관리</Link>
           <Link href="/demo">인터뷰 화면</Link>
