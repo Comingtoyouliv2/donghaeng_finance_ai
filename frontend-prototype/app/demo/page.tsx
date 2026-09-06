@@ -20,16 +20,15 @@ export default function DemoPage() {
   const threadRef = useRef<HTMLDivElement>(null);
   const replyTimerRef = useRef<number | null>(null);
   const [answers, setAnswers] = useState<AcceptedAnswer[]>([]);
-  const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [answer, setAnswer] = useState("");
   const [isReplying, setIsReplying] = useState(false);
   const [checked, setChecked] = useState(false);
   const [isComplete, setIsComplete] = useState(false);
   const [evidence, setEvidence] = useState<string[]>([]);
 
-  const currentIndex = editingIndex ?? answers.length;
+  const currentIndex = answers.length;
   const current = questions[currentIndex];
-  const reviewing = answers.length === questions.length && editingIndex === null && !isReplying;
+  const reviewing = answers.length === questions.length && !isReplying;
   const progress = answers.length / questions.length;
   const questEvidence = evidence.length ? evidence : fallbackEvidence;
 
@@ -51,28 +50,17 @@ export default function DemoPage() {
 
   useEffect(() => {
     threadRef.current?.scrollTo({ top: threadRef.current.scrollHeight, behavior: "smooth" });
-  }, [answers.length, editingIndex, isReplying, isComplete]);
+  }, [answers.length, isReplying, isComplete]);
 
   function sendAnswer() {
     const message = answer.trim();
     if (!message || !current || isReplying || isComplete) return;
 
-    setAnswers((items) => {
-      if (editingIndex === null) return [...items, { questionId: current.id, text: message }];
-      return items.map((item, index) => index === editingIndex ? { questionId: current.id, text: message } : item);
-    });
+    setAnswers((items) => [...items, { questionId: current.id, text: message }]);
     setAnswer("");
-    setEditingIndex(null);
     setChecked(false);
     setIsReplying(true);
     replyTimerRef.current = window.setTimeout(() => setIsReplying(false), 560);
-  }
-
-  function editAnswer(index: number) {
-    setEditingIndex(index);
-    setAnswer(answers[index].text);
-    setChecked(false);
-    setIsComplete(false);
   }
 
   function handleComposerKeyDown(event: KeyboardEvent<HTMLTextAreaElement>) {
@@ -101,17 +89,17 @@ export default function DemoPage() {
     <main className="human-call consultation-chat">
       <header className="human-call-sitebar consultation-topbar">
         <Link href="/" className="human-call-brand">동행금융</Link>
-        <span>AI RECOVERY CONSULTATION</span>
-        <Link href="/">상담 나가기</Link>
+        <span>RECOVERY INTERVIEW</span>
+        <nav aria-label="상담 화면 메뉴"><Link href="/admin">관리자 대시보드</Link><Link href="/">상담 나가기</Link></nav>
       </header>
 
       <div className="consultation-workspace">
-        <section className="phone-shell consultation-thread-shell" aria-label="AI 금융 상담 채팅">
+        <section className="phone-shell consultation-thread-shell" aria-label="금융 상담 대화">
           <header className="phone-header">
             <Link href="/" className="phone-back" aria-label="퀘스트 길로 돌아가기">‹</Link>
             <div className="caller-profile">
               <Image src="/interviewer-yujin.png" alt="" width={42} height={42} />
-              <div><strong>유진 · AI 상담자</strong><span>{scenario.persona.businessName} 회복 인터뷰</span></div>
+              <div><strong>유진 상담 매니저</strong><span>{scenario.persona.businessName} 회복 인터뷰</span></div>
             </div>
             <div className="call-duration"><i aria-hidden="true" /><span>{isComplete ? "기록 완료" : `${answers.length}/${questions.length}`}</span></div>
           </header>
@@ -126,7 +114,7 @@ export default function DemoPage() {
               <Image src="/interviewer-yujin.png" alt="" width={42} height={42} />
               <div>
                 <p>안녕하세요, {scenario.persona.borrowerName} 사장님. 골목에서 모은 세 가지 생각을 바탕으로 {scenario.persona.businessName}의 회복 이야기를 차근차근 정리해볼게요.</p>
-                <small>유진 · AI 상담자</small>
+                <small>유진 상담 매니저</small>
               </div>
             </div>
 
@@ -140,7 +128,7 @@ export default function DemoPage() {
               return (
                 <div className="consultation-exchange" key={item.questionId}>
                   <div className="spoken incoming compact"><Image src="/interviewer-yujin.png" alt="" width={42} height={42} /><div><p>{question.question}</p><small>{question.label}</small></div></div>
-                  <div className="spoken outgoing"><p>{item.text}</p><small>{scenario.persona.borrowerName} 사장님</small><button type="button" onClick={() => editAnswer(index)}>수정</button></div>
+                  <div className="spoken outgoing"><p>{item.text}</p><small>{scenario.persona.borrowerName} 사장님</small></div>
                 </div>
               );
             })}
@@ -148,7 +136,7 @@ export default function DemoPage() {
             {current && !isReplying && (
               <div className="spoken incoming current">
                 <Image src="/interviewer-yujin.png" alt="" width={42} height={42} />
-                <div><p>{current.question}</p><small>{editingIndex === null ? `${current.category} · ${current.label}` : `${current.label} 답변 수정`}</small></div>
+                <div><p>{current.question}</p><small>{`${current.category} · ${current.label}`}</small></div>
               </div>
             )}
             {isReplying && <div className="spoken incoming compact"><Image src="/interviewer-yujin.png" alt="" width={42} height={42} /><div className="chat-typing" aria-label="유진이 다음 질문을 준비하고 있습니다"><i /><i /><i /></div></div>}
@@ -156,7 +144,7 @@ export default function DemoPage() {
             {isComplete && (
               <div className="spoken incoming current consultation-finish-message">
                 <Image src="/interviewer-yujin.png" alt="" width={42} height={42} />
-                <div><p>인터뷰가 기록됐어요. 영업일 감소 사유와 6개월 안에 월 29일 영업이라는 목표를 중심으로 다음 상담 자료를 준비하겠습니다.</p><small>유진 · AI 상담자</small></div>
+                <div><p>인터뷰가 기록됐어요. 영업일 감소 사유와 6개월 안에 월 29일 영업이라는 목표를 중심으로 다음 상담 자료를 준비하겠습니다.</p><small>유진 상담 매니저</small></div>
               </div>
             )}
           </div>
@@ -171,9 +159,8 @@ export default function DemoPage() {
                 <label className="reply-input">
                   <span className="sr-only">상담 답변 입력</span>
                   <textarea value={answer} onChange={(event) => setAnswer(event.target.value)} onKeyDown={handleComposerKeyDown} placeholder="상황을 편하게 적어주세요" rows={2} maxLength={3000} />
-                  <button type="button" onClick={sendAnswer} disabled={!answer.trim()}>{editingIndex === null ? "보내기" : "수정"}</button>
+                  <button type="button" onClick={sendAnswer} disabled={!answer.trim()}>보내기</button>
                 </label>
-                {editingIndex !== null && <button type="button" className="consultation-text-button" onClick={() => { setEditingIndex(null); setAnswer(""); }}>수정 취소</button>}
               </>
             ) : isReplying ? (
               <p className="consultation-wait">답변에서 필요한 내용을 정리하고 있습니다.</p>

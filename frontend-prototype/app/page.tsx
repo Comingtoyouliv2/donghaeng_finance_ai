@@ -137,7 +137,10 @@ export default function Home() {
 
         <header className="mission-road-nav">
           <a href="#start" className="mission-road-brand" aria-label="동행금융 처음으로">동행금융</a>
-          <p>{`퀘스트 ${completedQuests} / ${missions.length} · 회복 근거 수집 중`}</p>
+          <div className="mission-road-nav-actions">
+            <p>{`퀘스트 ${completedQuests} / ${missions.length} · 회복 근거 수집 중`}</p>
+            <a href="/admin">관리자</a>
+          </div>
         </header>
 
         <section
