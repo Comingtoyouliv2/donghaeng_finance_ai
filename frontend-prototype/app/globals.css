@@ -778,13 +778,17 @@ a,button { font:inherit; } a { color:inherit; } button { cursor:pointer; }
 .consultation-chat .spoken.current>div { border:0; border-left:2px solid #a77d3e; border-radius:0; background:transparent; }
 .consultation-chat .spoken.compact>div { border-radius:0; }
 .consultation-chat .spoken.compact p,.consultation-chat .spoken small { color:#81786a; }
-.consultation-chat .spoken.outgoing { max-width:72%; margin:24px 0 24px auto; }
-.consultation-chat .spoken.outgoing>p { padding:14px 17px; border:0; border-radius:1px; background:#ddd0bc; color:#34352f; }
+.consultation-chat .call-thread>.spoken.current { margin-top:0; }
+.consultation-chat .consultation-exchange { display:flex; flex-direction:column; gap:14px; margin:0 0 30px; }
+.consultation-chat .consultation-exchange .spoken { margin-top:0; }
+.consultation-chat .spoken.outgoing { width:fit-content; max-width:72%; flex-direction:column; align-items:flex-end; gap:6px; margin:0 0 0 auto; }
+.consultation-chat .spoken.outgoing>p { max-width:100%; padding:14px 17px; border:0; border-radius:1px; background:#ddd0bc; color:#34352f; }
+.consultation-chat .spoken.outgoing small { margin:0; padding:0 2px 0 0; line-height:1.35; }
 .consultation-chat .consultation-quest-context { margin:26px 0 32px 52px; padding:16px 0; border:0; border-top:1px solid #c7baa6; border-bottom:1px solid #c7baa6; border-radius:0; background:transparent; color:#665f53; }
 .consultation-chat .consultation-quest-context p { color:#736958; }
 .consultation-chat .consultation-quest-context p span { color:#a77d3e; }
 .consultation-chat .chat-typing { border-radius:0; background:transparent!important; }
-.consultation-chat .consultation-manager-reply { margin:0 0 24px; }
+.consultation-chat .consultation-manager-reply { margin:0; }
 .consultation-chat .consultation-manager-reply>div { border-left:1px solid #a77d3e; }
 .consultation-chat .consultation-manager-reply small { color:#927549; }
 .consultation-chat .reply-dock { padding:14px clamp(16px,2.4vw,32px) 18px; border-color:#cfc5b4; background:#e9e0d1; }
@@ -830,6 +834,9 @@ a,button { font:inherit; } a { color:inherit; } button { cursor:pointer; }
   .consultation-chat .record-status { padding:8px 16px; }
   .consultation-chat .consultation-workspace { width:100%; padding-top:0; }
   .consultation-chat .consultation-thread-shell { height:calc(100svh - 138px); min-height:560px; border-right:0; border-left:0; }
+  .consultation-chat .call-thread { padding:24px 18px; }
+  .consultation-chat .consultation-exchange { gap:12px; margin-bottom:24px; }
+  .consultation-chat .spoken.outgoing { max-width:86%; }
   .consultation-chat .consultation-context { margin:0; border-right:0; border-left:0; }
   .consultation-chat .scenario-reply { grid-template-columns:1fr; gap:4px; }
 }
