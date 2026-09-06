@@ -57,6 +57,15 @@ export default function Home() {
   const startInterview = useCallback(() => {
     if (leavingRef.current) return;
     leavingRef.current = true;
+    try {
+      const evidence = missions.map((item, index) => ({
+        title: item.quest,
+        answer: answersRef.current[index],
+      }));
+      window.sessionStorage.setItem("donghaeng-quest-evidence", JSON.stringify(evidence));
+    } catch {
+      // The consultation still works when browser storage is unavailable.
+    }
     setIsLeaving(true);
     window.setTimeout(() => router.push("/demo"), 1480);
   }, [router]);
@@ -72,16 +81,21 @@ export default function Home() {
     setAnswers((current) => {
       const next = [...current];
       next[questIndex] = choice;
+      answersRef.current = next;
       return next;
     });
-    setReward(missions[questIndex].reward);
+    setReward(questIndex === missions.length - 1 ? "상담 준비 완료" : missions[questIndex].reward);
     if (rewardTimerRef.current) window.clearTimeout(rewardTimerRef.current);
     rewardTimerRef.current = window.setTimeout(() => {
       setReward(null);
       setIsQuestOpen(false);
-      if (questIndex < missions.length - 1) scrollToQuest(questIndex + 1);
-    }, 850);
-  }, [mission, scrollToQuest]);
+      if (questIndex < missions.length - 1) {
+        scrollToQuest(questIndex + 1);
+      } else {
+        startInterview();
+      }
+    }, questIndex === missions.length - 1 ? 1100 : 850);
+  }, [mission, scrollToQuest, startInterview]);
 
   const handleArrival = useCallback(() => {
     const missingQuest = answers.findIndex((answer) => !answer);
@@ -148,12 +162,13 @@ export default function Home() {
           onClick={() => setIsQuestOpen(true)}
           aria-expanded={isQuestOpen}
           aria-controls="mission-quest-dialog"
+          aria-label={`${active.quest} 퀘스트 ${answers[mission] ? "다시 보기" : "열기"}`}
         >
           <span className="mission-quest-beacon" aria-hidden="true"><i /></span>
-          <span className="mission-quest-copy">
-            <small>{answers[mission] ? "퀘스트 완료" : `퀘스트 ${mission + 1}`}</small>
-            <strong>{active.quest}</strong>
-            <em>{answers[mission] ? "근거 수집됨" : "질문 열기"}</em>
+          <span className="mission-quest-copy" aria-hidden="true">
+            <small>{answers[mission] ? "QUEST CLEAR" : `QUEST ${String(mission + 1).padStart(2, "0")}`}</small>
+            <strong>{answers[mission] ? "퀘스트 다시 보기" : "퀘스트 열기"}</strong>
+            <em>{answers[mission] ? "수집한 근거를 확인하세요" : "눌러서 질문을 확인하세요"}</em>
           </span>
         </button>
 
