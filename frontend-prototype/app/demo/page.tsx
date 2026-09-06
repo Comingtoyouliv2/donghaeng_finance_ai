@@ -7,6 +7,7 @@ import type { KeyboardEvent } from "react";
 import WorkspaceTopbar from "../components/WorkspaceTopbar";
 import { INTERVIEW_CATEGORIES, OPERATING_DAY_SCENARIO } from "./scenario";
 import { requestRecord } from "./record";
+import { requestInterviewTurn, type InterviewTurnResponse } from "./claude-turn";
 
 interface AcceptedAnswer {
   questionId: string;
@@ -19,8 +20,10 @@ export default function DemoPage() {
   const scenario = OPERATING_DAY_SCENARIO;
   const questions = scenario.questions;
   const threadRef = useRef<HTMLDivElement>(null);
-  const replyTimerRef = useRef<number | null>(null);
   const [answers, setAnswers] = useState<AcceptedAnswer[]>([]);
+  const [managerReplies, setManagerReplies] = useState<Record<string, InterviewTurnResponse>>({});
+  const [adaptiveQuestion, setAdaptiveQuestion] = useState<string | null>(null);
+  const [aiConsent, setAiConsent] = useState(false);
   const [answer, setAnswer] = useState("");
   const [isReplying, setIsReplying] = useState(false);
   const [checked, setChecked] = useState(false);
@@ -74,7 +77,6 @@ export default function DemoPage() {
 
     return () => {
       window.clearTimeout(evidenceTimer);
-      if (replyTimerRef.current) window.clearTimeout(replyTimerRef.current);
     };
   }, []);
 
@@ -92,13 +94,16 @@ export default function DemoPage() {
       const record = await requestRecord({ kind: "interview", revision, answers: [...answers, { questionId: current.id, text: message }], complete: false });
       setAnswers(record.answers);
       setRevision(record.revision);
-
-    setAnswer("");
-    setChecked(false);
-    setIsReplying(true);
-    replyTimerRef.current = window.setTimeout(() => setIsReplying(false), 560);
+      setAnswer("");
+      setChecked(false);
+      setIsReplying(true);
+      const turn = await requestInterviewTurn({ currentQuestionId: current.id, answer: message, answers: record.answers, consent: aiConsent });
+      setManagerReplies((replies) => ({ ...replies, [current.id]: turn }));
+      const next = questions[record.answers.length];
+      setAdaptiveQuestion(turn.nextQuestionId === next?.id ? turn.nextQuestion : null);
+      setIsReplying(false);
     } catch (e) { setError(e instanceof Error ? e.message : "답변 저장에 실패했습니다."); }
-    finally { savingRef.current = false; setSaving(false); }
+    finally { savingRef.current = false; setSaving(false); setIsReplying(false); }
   }
 
   function handleComposerKeyDown(event: KeyboardEvent<HTMLTextAreaElement>) {
@@ -162,6 +167,7 @@ export default function DemoPage() {
                 <div className="consultation-exchange" key={item.questionId}>
                   <div className="spoken incoming compact"><Image src="/interviewer-yujin.png" alt="" width={42} height={42} /><div><p>{question.question}</p><small>{question.label}</small></div></div>
                   <div className="spoken outgoing"><p>{item.text}</p><small>{scenario.persona.borrowerName} 사장님</small></div>
+                  {managerReplies[item.questionId] && <div className="spoken incoming compact consultation-manager-reply"><Image src="/interviewer-yujin.png" alt="" width={42} height={42} /><div><p>{managerReplies[item.questionId].acknowledgement}</p><small>{managerReplies[item.questionId].provider === "claude" ? "Claude로 정리한 응답" : managerReplies[item.questionId].configured ? "질문 기준선으로 안전하게 이어진 응답" : "Claude 연결 전 · 질문 기준선 응답"}</small></div></div>}
                 </div>
               );
             })}
@@ -169,7 +175,7 @@ export default function DemoPage() {
             {current && !isReplying && (
               <div className="spoken incoming current">
                 <Image src="/interviewer-yujin.png" alt="" width={42} height={42} />
-                <div><p>{current.question}</p><small>{`${current.category} · ${current.label}`}</small></div>
+                <div><p>{adaptiveQuestion ?? current.question}</p><small>{`${current.category} · ${current.label}`}</small></div>
               </div>
             )}
             {isReplying && <div className="spoken incoming compact"><Image src="/interviewer-yujin.png" alt="" width={42} height={42} /><div className="chat-typing" aria-label="유진이 다음 질문을 준비하고 있습니다"><i /><i /><i /></div></div>}
@@ -185,6 +191,7 @@ export default function DemoPage() {
           <footer className="reply-dock">
             {current && !isReplying ? (
               <>
+                <label className="consultation-ai-consent"><input type="checkbox" checked={aiConsent} onChange={(event) => setAiConsent(event.target.checked)} /><span>Claude가 이 답변을 읽고 다음 질문을 자연스럽게 준비하도록 허용합니다.</span></label>
                 <div className="scenario-reply" aria-label="시나리오 답변">
                   <span>시연 답변</span>
                   <button type="button" disabled={!ready || saving} className={answer === current.suggestedAnswer ? "selected" : ""} onClick={() => setAnswer(current.suggestedAnswer)}>{current.suggestedAnswer}</button>

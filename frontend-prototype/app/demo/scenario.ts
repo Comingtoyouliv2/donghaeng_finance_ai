@@ -6,6 +6,8 @@ export interface InterviewScenarioQuestion {
   category: InterviewCategory;
   question: string;
   suggestedAnswer: string;
+  purpose: string;
+  mustCapture: readonly string[];
 }
 
 /**
@@ -35,6 +37,8 @@ export const OPERATING_DAY_SCENARIO = {
       category: "현재 상황",
       question: "먼저 최근 매출 흐름부터 편하게 말씀해 주세요. 최근 3개월 기준 월평균 매출은 어느 정도인가요?",
       suggestedAnswer: "최근 3개월 월평균 매출은 2600만원입니다.",
+      purpose: "최근 매출 규모를 사장님의 진술로 확인한다.",
+      mustCapture: ["최근 3개월 기준", "월평균 매출 금액"],
     },
     {
       id: "fixed_operating_costs",
@@ -42,6 +46,8 @@ export const OPERATING_DAY_SCENARIO = {
       category: "현재 상황",
       question: "임차료·인건비처럼 매달 반복되는 운영비는 평균 얼마인가요?",
       suggestedAnswer: "고정비는 월 1190만원입니다.",
+      purpose: "매달 반복되는 운영비 규모를 확인한다.",
+      mustCapture: ["월 기준", "고정 운영비 금액"],
     },
     {
       id: "operating_day_drop_reason",
@@ -49,6 +55,8 @@ export const OPERATING_DAY_SCENARIO = {
       category: "현재 상황",
       question: "최근 3개월은 문을 연 날이 줄어든 것으로 확인됩니다. 어떤 사정이 있었고, 지금은 해소됐나요?",
       suggestedAnswer: "지난봄에 허리를 다쳐서 자주 문을 닫았습니다. 지금은 치료가 끝나서 다시 매일 열고 있습니다.",
+      purpose: "영업일 감소 원인과 현재 해소 여부를 구분해 확인한다.",
+      mustCapture: ["영업일 감소 사유", "현재 해소 여부"],
     },
     {
       id: "improvement_plan",
@@ -56,6 +64,8 @@ export const OPERATING_DAY_SCENARIO = {
       category: "개선 계획",
       question: "지금 사업에서 가장 먼저 바꾸고 싶은 한 가지와 구체적인 목표를 알려주세요.",
       suggestedAnswer: "가장 큰 문제는 일손이 부족해서 가게 문을 못 여는 날이 생기는 것입니다. 여는 날을 지금 23일에서 6개월 안에 29일까지 늘리고, 장부로 매번 확인하겠습니다.",
+      purpose: "실행할 변화와 수치 목표, 기간, 확인 방법을 한 계획으로 묶는다.",
+      mustCapture: ["우선 해결할 문제", "현재값과 목표값", "달성 기간", "확인 방법"],
     },
     {
       id: "execution_readiness",
@@ -63,6 +73,8 @@ export const OPERATING_DAY_SCENARIO = {
       category: "개선 계획",
       question: "그 계획을 시작하려면 지금 준비된 것과 아직 막혀 있는 것은 무엇인가요?",
       suggestedAnswer: "예산 80만원은 확보했고 일정도 정했습니다. 아직 일손이 부족합니다.",
+      purpose: "계획의 준비 상태와 남은 장애물을 함께 확인한다.",
+      mustCapture: ["확보한 예산 또는 자원", "정한 일정", "남은 장애물"],
     },
     {
       id: "confirmed_reservations",
@@ -70,6 +82,8 @@ export const OPERATING_DAY_SCENARIO = {
       category: "향후 전망",
       question: "앞으로 4주 안에 이미 확정된 예약이나 주문이 있다면 몇 건인가요?",
       suggestedAnswer: "앞으로 4주 안에 확정된 예약이나 주문은 0건입니다.",
+      purpose: "단기 매출 전망을 뒷받침하는 확정 수요를 확인한다.",
+      mustCapture: ["앞으로 4주", "확정 예약 또는 주문 건수"],
     },
     {
       id: "seasonality_outlook",
@@ -77,6 +91,8 @@ export const OPERATING_DAY_SCENARIO = {
       category: "향후 전망",
       question: "앞으로 3개월의 손님이나 주문 전망과 그렇게 생각한 이유를 알려주세요.",
       suggestedAnswer: "앞으로 3개월은 비수기라 작년 이맘때도 주문이 줄었고 올해도 줄 것 같습니다.",
+      purpose: "단기 전망의 방향과 근거를 함께 확인한다.",
+      mustCapture: ["앞으로 3개월 전망", "계절성 또는 비교 근거"],
     },
     {
       id: "essential_household_expenses",
@@ -84,6 +100,8 @@ export const OPERATING_DAY_SCENARIO = {
       category: "생활 여력",
       question: "주거비·교육비 등 꼭 필요한 가계지출은 한 달에 대략 얼마인가요?",
       suggestedAnswer: "필수 가계지출은 월 220만원입니다.",
+      purpose: "사업 외 필수 생활비 부담을 월 기준으로 확인한다.",
+      mustCapture: ["월 기준", "필수 가계지출 금액"],
     },
     {
       id: "emergency_buffer_months",
@@ -91,6 +109,8 @@ export const OPERATING_DAY_SCENARIO = {
       category: "생활 여력",
       question: "현재 비상자금으로 필수 생활비를 대략 몇 개월 감당할 수 있나요?",
       suggestedAnswer: "비상자금으로 필수 생활비를 3개월 감당할 수 있습니다.",
+      purpose: "소득 공백을 버틸 수 있는 생활 안전 여력을 확인한다.",
+      mustCapture: ["필수 생활비 기준", "감당 가능한 개월 수"],
     },
     {
       id: "platform_fee_pressure",
@@ -98,6 +118,8 @@ export const OPERATING_DAY_SCENARIO = {
       category: "현재 상황",
       question: "배달이나 온라인 플랫폼 수수료가 운영에 부담된 부분이 있었나요?",
       suggestedAnswer: "배달은 거의 안 해서 플랫폼 수수료 부담 없습니다.",
+      purpose: "플랫폼 비용이 운영 압박으로 작용하는지 확인한다.",
+      mustCapture: ["플랫폼 이용 정도", "수수료 부담 여부"],
     },
     {
       id: "hall_customer_decline",
@@ -105,6 +127,8 @@ export const OPERATING_DAY_SCENARIO = {
       category: "현재 상황",
       question: "최근 홀 손님이나 홀 매출에 변화가 있었나요?",
       suggestedAnswer: "홀 손님은 문을 못 연 날 말고는 그대로입니다.",
+      purpose: "영업일 감소와 고객 수요 감소를 구분한다.",
+      mustCapture: ["홀 손님 또는 홀 매출 변화", "영업일 영향과의 구분"],
     },
     {
       id: "repeat_customer_share",
@@ -112,6 +136,8 @@ export const OPERATING_DAY_SCENARIO = {
       category: "현재 상황",
       question: "최근 한 달 기준으로 단골 매출은 몇 퍼센트 정도인가요?",
       suggestedAnswer: "최근 한 달 기준 단골 매출은 45%입니다.",
+      purpose: "반복 고객 기반의 안정성을 확인한다.",
+      mustCapture: ["최근 한 달 기준", "단골 매출 비중"],
     },
   ] satisfies InterviewScenarioQuestion[],
 } as const;

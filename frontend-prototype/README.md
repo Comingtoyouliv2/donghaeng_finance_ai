@@ -27,11 +27,13 @@ Vercel 프로젝트의 Root Directory를 `frontend-prototype`으로 지정하고
 
 Typecast 음성을 사용하려면 Vercel 프로젝트 환경 변수에 `TYPECAST_API_KEY`를 등록합니다. 선택 기능인 네이버 지도 파노라마는 `NEXT_PUBLIC_NAVER_MAPS_NCP_KEY_ID`를 등록하지 않아도 fallback 화면으로 동작합니다.
 
+Claude 상담 응답을 사용하려면 서버 환경 변수에 `ANTHROPIC_API_KEY`를 등록합니다. 모델은 기본적으로 `claude-sonnet-5`를 사용하며 `DONGHAENG_ANTHROPIC_MODEL`로 바꿀 수 있습니다. API 키가 없거나 Claude 요청이 실패하면 인터뷰는 중단되지 않고 `demo-scenario`의 고정 질문 기준선으로 이어집니다. 사장님이 화면에서 Claude 처리에 동의한 답변만 외부 API로 전송합니다.
+
 ## 검증
 
 ```bash
 npm run build
-node --test tests/rendered-html.test.mjs
+node --test tests/rendered-html.test.mjs tests/claude-turn.test.mjs
 ```
 
 이 디렉터리는 기존 서버 애플리케이션을 변경하지 않고 UX를 검토할 수 있도록 독립 실행형으로 추가했습니다. 실제 제품에 통합할 때는 `/demo` 진입을 루트 프로젝트의 `/borrower` 인터뷰 흐름과 연결하면 됩니다.
