@@ -69,7 +69,8 @@ export default function Home() {
       // The consultation still works when browser storage is unavailable.
     }
     setIsLeaving(true);
-    window.setTimeout(() => router.push("/demo"), 1480);
+    const startToken = window.crypto.randomUUID?.() ?? `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    window.setTimeout(() => router.push(`/demo?start=${encodeURIComponent(startToken)}`), 1480);
   }, [router]);
 
   const scrollToQuest = useCallback((index: number) => {

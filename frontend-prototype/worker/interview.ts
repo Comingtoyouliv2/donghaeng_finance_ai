@@ -21,7 +21,11 @@ export async function interviewApi(request: Request, db: D1Database) {
     if (raw.length > 50000) return json({ error: "입력 내용이 너무 깁니다." }, 413);
     const body = JSON.parse(raw);
     if (!body || typeof body !== "object") return json({ error: "요청 형식이 올바르지 않습니다." }, 400);
-    if (body.kind === "workspace") {
+    if (body.kind === "reset") {
+      if (typeof body.startToken !== "string" || body.startToken.length < 8 || body.startToken.length > 100 || !/^[a-zA-Z0-9-]+$/.test(body.startToken)) return json({ error: "새 상담 시작 정보를 확인해 주세요." }, 400);
+      await db.prepare("INSERT INTO interviews (id) VALUES (?) ON CONFLICT(id) DO NOTHING").bind(scenario.id).run();
+      await db.prepare("UPDATE interviews SET answers = '[]', revision = 0, completed_at = NULL, updated_at = NULL, note = '', checklist = '[]', disposition = 'PENDING', review_revision = 0, review_updated_at = NULL, plan_choice = NULL, execution_records = '[]', institution_id = NULL, preparation_documents = '[]', preparation_owner = ?, review_period = ?, preparation_reviewed = 0, workspace_revision = 0, workspace_updated_at = NULL WHERE id = ?").bind(PREPARATION_OWNERS[0], REVIEW_PERIODS[0], scenario.id).run();
+    } else if (body.kind === "workspace") {
       const planIds = new Set(RECOVERY_PLANS.map(item => item.id));
       const institutionIds = new Set(INSTITUTIONS.map(item => item.id));
       if ((body.planChoice !== null && !planIds.has(body.planChoice)) || (body.institutionId !== null && !institutionIds.has(body.institutionId)) || !Array.isArray(body.preparationDocuments) || body.preparationDocuments.some((item: unknown) => typeof item !== "string" || !PREPARATION_DOCUMENTS.includes(item as typeof PREPARATION_DOCUMENTS[number])) || !PREPARATION_OWNERS.includes(body.preparationOwner) || !REVIEW_PERIODS.includes(body.reviewPeriod) || typeof body.preparationReviewed !== "boolean" || !Number.isInteger(body.workspaceRevision) || body.workspaceRevision < 0) return json({ error: "상담 준비 내용을 확인해 주세요." }, 400);

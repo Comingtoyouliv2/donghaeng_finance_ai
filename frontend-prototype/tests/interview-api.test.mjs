@@ -82,5 +82,18 @@ test("interview answers persist, validate, complete and keep review notes indepe
     assert.equal(report.recovery.executionRecords.length, 1);
     assert.equal(report.consultation.institutionId, "koreg");
     assert.deepEqual((await call()).data, beforeExport, "export must not mutate interview or review");
+    assert.equal((await call({ kind: "reset", startToken: "short" })).status, 400);
+    const reset = await call({ kind: "reset", startToken: "new-session-20260906" });
+    assert.equal(reset.status, 200);
+    assert.deepEqual(reset.data.answers, []);
+    assert.equal(reset.data.revision, 0);
+    assert.equal(reset.data.completedAt, null);
+    assert.equal(reset.data.note, "");
+    assert.deepEqual(reset.data.checklist, []);
+    assert.equal(reset.data.disposition, "PENDING");
+    assert.equal(reset.data.workspace.planChoice, null);
+    assert.deepEqual(reset.data.workspace.executionRecords, []);
+    assert.equal(reset.data.workspace.institutionId, null);
+    assert.equal(reset.data.workspace.revision, 0);
   } finally { sqlite.close(); }
 });

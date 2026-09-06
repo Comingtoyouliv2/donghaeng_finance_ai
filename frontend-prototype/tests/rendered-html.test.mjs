@@ -54,7 +54,9 @@ test("keeps the three-mission experience and demo route connected", async () => 
   assert.equal((missionSource.match(/question:/g) ?? []).length, 3);
   assert.equal((missionSource.match(/reward:/g) ?? []).length, 3);
   assert.match(page, /answerQuest/);
-  assert.match(page, /router\.push\("\/demo"\)/);
+  assert.match(page, /router\.push\(`\/demo\?start=/);
+  assert.match(demo, /kind: "reset"/);
+  assert.match(demo, /donghaeng-interview-start-token/);
   assert.match(scene, /donghaeng:progress/);
   assert.match(scene, /CatmullRomCurve3/);
   assert.match(layout, /동행금융 \| 다시 금융과 만나는 세 걸음/);

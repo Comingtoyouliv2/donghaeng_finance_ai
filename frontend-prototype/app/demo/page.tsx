@@ -37,9 +37,18 @@ export default function DemoPage() {
   const loadInterview = useCallback(async function loadInterview() {
     setError("");
     try {
-      let record = await requestRecord();
+      const startToken = new URLSearchParams(window.location.search).get("start");
+      let appliedToken: string | null = null;
+      try { appliedToken = window.sessionStorage.getItem("donghaeng-interview-start-token"); } catch { /* The start URL still creates a clean interview. */ }
+      let record = startToken && startToken !== appliedToken
+        ? await requestRecord({ kind: "reset", startToken })
+        : await requestRecord();
+      if (startToken && startToken !== appliedToken) {
+        try { window.sessionStorage.setItem("donghaeng-interview-start-token", startToken); } catch { /* History replacement prevents an immediate duplicate reset. */ }
+        window.history.replaceState(null, "", "/demo");
+      }
       // Preserve completed interviews saved by the earlier browser-only demo.
-      if (record.answers.length === 0 && record.revision === 0) {
+      if (!startToken && record.answers.length === 0 && record.revision === 0) {
         let previous;
         try { previous = JSON.parse(sessionStorage.getItem("donghaeng-demo-interview") || "null"); } catch { /* No valid legacy record. */ }
         if (previous?.scenarioId === scenario.id && Array.isArray(previous.answers) && previous.answers.length) {
