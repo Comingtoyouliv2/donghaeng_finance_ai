@@ -90,7 +90,10 @@ export default function DemoPage() {
       <header className="human-call-sitebar consultation-topbar">
         <Link href="/" className="human-call-brand" onClick={(event) => { event.preventDefault(); window.location.assign("/"); }}>동행금융</Link>
         <span>RECOVERY INTERVIEW</span>
-        <nav aria-label="상담 화면 메뉴"><Link href="/admin">관리자 대시보드</Link><Link href="/">상담 나가기</Link></nav>
+        <nav aria-label="상담 화면 메뉴">
+          <Link href="/admin" onClick={(event) => { event.preventDefault(); window.location.assign("/admin"); }}>관리자 대시보드</Link>
+          <Link href="/" onClick={(event) => { event.preventDefault(); window.location.assign("/"); }}>상담 나가기</Link>
+        </nav>
       </header>
 
       <div className="consultation-workspace">
