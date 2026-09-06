@@ -11,4 +11,7 @@ export const interviews = sqliteTable("interviews", {
   updatedAt: text("updated_at"),
   note: text("note").notNull().default(""),
   checklist: text("checklist").notNull().default("[]"),
+  disposition: text("disposition").notNull().default("PENDING"),
+  reviewRevision: integer("review_revision").notNull().default(0),
+  reviewUpdatedAt: text("review_updated_at"),
 });

@@ -1,157 +1,129 @@
 "use client";
+/* eslint-disable @next/next/no-html-link-for-pages -- This deployment uses full-page navigation to avoid vinext client routing failures. */
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { flushSync } from "react-dom";
 import WorkspaceTopbar from "../components/WorkspaceTopbar";
-import { INTERVIEW_CATEGORIES, OPERATING_DAY_SCENARIO } from "../demo/scenario";
-import { requestRecord, REVIEW_ITEMS, type InterviewRecord } from "../demo/record";
+import { OPERATING_DAY_SCENARIO as scenario } from "../demo/scenario";
+import { requestRecord, REVIEW_ITEMS, REVIEW_STATES, type InterviewRecord, type ReviewDisposition } from "../demo/record";
+import { buildReviewReport, requestReport, type ReviewEvidence, type ReviewReport } from "./report";
+import ReviewDocument, { formatDate } from "./ReviewDocument";
+import "./review.css";
 
-const reviewItems = REVIEW_ITEMS;
+type View = "summary" | "evidence" | "review" | "report";
+const views: [View, string][] = [["summary", "사업 현황"], ["evidence", "답변과 근거"], ["review", "담당자 검토"], ["report", "최종 검토서"]];
+
+function Evidence({ item }: { item: ReviewEvidence }) {
+  return <details className="review-evidence" id={item.questionId}><summary><span>{String(item.number).padStart(2, "0")}</span><div><strong>{item.label}</strong><p>{item.originalText ?? "아직 답변하지 않았습니다."}</p></div><small>{item.status === "MISSING" ? "미응답" : "원문 보기"}</small><b aria-hidden="true">＋</b></summary><div><p className="review-question">{item.question}</p><blockquote>{item.originalText ?? "아직 답변하지 않았습니다."}</blockquote><small>{item.status === "MISSING" ? "연결된 답변이 없습니다." : "본인 진술 · 증빙 미확인"}</small><code>{item.id}</code></div></details>;
+}
 
 export default function AdminPage() {
-  const scenario = OPERATING_DAY_SCENARIO;
-  const [saved, setSaved] = useState<InterviewRecord | null>(null);
-  const [error, setError] = useState("");
+  const [record, setRecord] = useState<InterviewRecord | null>(null);
+  const [loadedAt, setLoadedAt] = useState<string | null>(null);
+  const [view, setView] = useState<View>("summary");
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState("all");
-  const [note, setNote] = useState("");
+  const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
-  const [saving, setSaving] = useState(false);
-  const dirty = useRef(false);
-  const noteRef = useRef<HTMLTextAreaElement>(null);
-  const focusNote = useRef(false);
-  async function refresh() {
-    try {
-      const record = await requestRecord();
-      setSaved(record);
-      setError("");
-      if (!dirty.current) { setNote(record.note); setCheckedItems(record.checklist); }
-    } catch (e) { setError(e instanceof Error ? e.message : "기록을 불러오지 못했습니다."); }
-  }
-  useEffect(() => {
-    void refresh();
-    const timer = window.setInterval(() => { if (!document.hidden) void refresh(); }, 5000);
-    window.addEventListener("focus", refresh);
-    return () => { window.clearInterval(timer); window.removeEventListener("focus", refresh); };
+  const [busy, setBusy] = useState(false);
+  const [dirty, setDirty] = useState(false);
+  const [note, setNote] = useState("");
+  const [checked, setChecked] = useState<string[]>([]);
+  const [disposition, setDisposition] = useState<ReviewDisposition>("PENDING");
+  const [printable, setPrintable] = useState<ReviewReport | null>(null);
+  const dirtyRef = useRef(false);
+  const busyRef = useRef(false);
+  const revisionRef = useRef(0);
+  const refreshSequence = useRef(0);
+
+  const acceptRecord = useCallback((next: InterviewRecord, resetDraft = false) => {
+    setRecord(next);
+    setLoadedAt(new Date().toISOString());
+    setPrintable(null);
+    if (!dirtyRef.current || resetDraft) {
+      setNote(next.note); setChecked(next.checklist); setDisposition(next.disposition);
+      revisionRef.current = next.reviewRevision;
+      dirtyRef.current = false; setDirty(false);
+    }
   }, []);
-  async function saveReview() {
-    if (saving) return;
-    setSaving(true); setNotice("");
+  const refresh = useCallback(async (resetDraft = false) => {
+    if (busyRef.current) return;
+    const sequence = ++refreshSequence.current;
     try {
-      await requestRecord({ kind: "review", note, checklist: checkedItems });
-      dirty.current = false;
-      setNotice("메모와 점검 항목을 저장했습니다.");
+      const next = await requestRecord();
+      if (sequence !== refreshSequence.current) return;
+      acceptRecord(next, resetDraft); setError("");
+    } catch (e) { if (sequence === refreshSequence.current) setError(e instanceof Error ? e.message : "불러오지 못했습니다."); }
+  }, [acceptRecord]);
+  useEffect(() => {
+    const initial = window.setTimeout(() => void refresh(), 0);
+    const onFocus = () => void refresh();
+    const timer = window.setInterval(() => { if (!document.hidden) void refresh(); }, 5000);
+    window.addEventListener("focus", onFocus);
+    const leave = (event: BeforeUnloadEvent) => { if (dirtyRef.current) { event.preventDefault(); event.returnValue = ""; } };
+    window.addEventListener("beforeunload", leave);
+    return () => { window.clearTimeout(initial); window.clearInterval(timer); window.removeEventListener("focus", onFocus); window.removeEventListener("beforeunload", leave); };
+  }, [refresh]);
+  function edit() { dirtyRef.current = true; setDirty(true); setPrintable(null); setNotice("저장하지 않은 변경 사항이 있습니다."); }
+  async function saveReview() {
+    if (busyRef.current || !record) return;
+    busyRef.current = true; ++refreshSequence.current; setBusy(true); setNotice("");
+    try {
+      const next = await requestRecord({ kind: "review", note, checklist: checked, disposition, reviewRevision: revisionRef.current });
+      acceptRecord(next, true); setPrintable(null); setError(""); setNotice("검토 상태와 의견을 저장했습니다.");
     } catch (e) { setNotice(e instanceof Error ? e.message : "저장하지 못했습니다."); }
-    finally { setSaving(false); }
+    finally { busyRef.current = false; setBusy(false); }
   }
-  const [selectedView, setSelectedView] = useState<"summary" | "answers" | "plan">("summary");
-  const [checkedItems, setCheckedItems] = useState<string[]>([]);
-  useEffect(() => { if (selectedView === "plan" && focusNote.current) { noteRef.current?.focus(); noteRef.current?.scrollIntoView({ block: "center", behavior: "smooth" }); focusNote.current = false; } }, [selectedView]);
+  async function exportReport(kind: "json" | "print") {
+    if (dirtyRef.current || busyRef.current || !record?.answers.length) return;
+    busyRef.current = true; ++refreshSequence.current; setBusy(true); setNotice("");
+    try {
+      const latest = await requestReport();
+      if (!latest.evidence.some(item => item.originalText !== null)) throw new Error("저장된 답변이 없습니다.");
+      if (kind === "json") {
+        const url = URL.createObjectURL(new Blob([JSON.stringify(latest, null, 2)], { type: "application/json" }));
+        const link = document.createElement("a"); link.href = url; link.download = `동행금융_느티나무감자탕_검토자료_${latest.preparedAt.slice(0, 10)}.json`;
+        document.body.appendChild(link); link.click(); link.remove(); window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+        setNotice("최신 저장 기록으로 검토자료를 내려받았습니다.");
+      } else {
+        flushSync(() => setPrintable(latest)); window.print();
+        setNotice("인쇄 창에서 PDF로 저장할 수 있습니다.");
+      }
+    } catch (e) { setNotice(e instanceof Error ? e.message : "검토자료를 만들지 못했습니다."); }
+    finally { busyRef.current = false; setBusy(false); }
+  }
+  const report = record && loadedAt ? buildReviewReport(record, loadedAt) : null;
+  const count = record?.answers.length ?? 0;
+  const interviewStatus = record?.completedAt ? "인터뷰 완료" : count ? "인터뷰 진행 중" : "인터뷰 대기";
+  const matches = `${scenario.persona.businessName} ${scenario.persona.borrowerName}`.includes(query.trim()) && (filter === "all" || record?.disposition === filter);
 
-  const answerMap = useMemo(
-    () => new Map((saved?.answers ?? []).map((answer) => [answer.questionId, answer.text])),
-    [saved],
-  );
-  const completedAnswers = saved?.answers?.length ?? 0;
-  const isCompleted = Boolean(saved?.completedAt);
-  const coverage = Math.round((completedAnswers / scenario.questions.length) * 100);
-  const status = isCompleted ? "인터뷰 완료" : completedAnswers ? "인터뷰 진행 중" : "인터뷰 대기";
-  const matches = `${scenario.persona.businessName} ${scenario.persona.borrowerName}`.includes(query.trim()) && (filter === "all" || (filter === "completed" ? isCompleted : !isCompleted));
-  const answerText = (id: string) => answerMap.get(id) ?? "아직 답변하지 않았습니다.";
-
-  return (
-    <main className="admin-console">
-      <WorkspaceTopbar active="admin" />
-      <div className="record-status" role="status">{error || (!saved ? "인터뷰 기록을 불러오는 중입니다." : saved.updatedAt ? `마지막 답변 저장: ${new Date(saved.updatedAt).toLocaleString("ko-KR")}` : "아직 저장된 인터뷰 답변이 없습니다.")}{error && <button onClick={refresh}>다시 불러오기</button>}</div>
-
-      <div className="admin-console-shell">
-        <aside className="admin-directory">
-          <div className="admin-directory-heading"><span>CASES</span><strong>상담 목록</strong><b>1</b></div>
-          <label className="admin-search"><span className="sr-only">상담 검색</span><input type="search" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="사장님·사업체 검색" /></label>
-          <div className="admin-filter-row">{[["all", "전체", 1], ["pending", "진행·대기", isCompleted ? 0 : 1], ["completed", "인터뷰 완료", isCompleted ? 1 : 0]].map(([key, label, count]) => <button key={key} aria-pressed={filter === key} className={filter === key ? "is-active" : ""} onClick={() => setFilter(String(key))}>{label} {count}</button>)}</div>
-          {matches ? <button className="admin-case-card is-selected" onClick={() => { setSelectedView("summary"); document.getElementById("admin-workspace")?.scrollIntoView({ behavior: "smooth" }); }}>
-            <span><i />{status}</span>
-            <strong>{scenario.persona.businessName}</strong>
-            <p>{scenario.persona.borrowerName} 사장님 · {scenario.persona.industryLabel}</p>
-            <small>답변 {completedAnswers} / {scenario.questions.length}</small>
-          </button> : <p className="record-status">검색 조건에 맞는 상담이 없습니다.</p>}
-          <p className="admin-directory-note">저장된 인터뷰 답변을 자동으로 갱신합니다.</p>
+  return <main className="review-desk">
+    <div className="review-screen"><WorkspaceTopbar active="admin" saving={busy} />
+      <div className="review-layout">
+        <aside className="review-directory">
+          <div className="review-directory-title"><span>상담 기록</span><span>01</span></div>
+          <label className="review-search"><span className="sr-only">상담 검색</span><input type="search" placeholder="가게 또는 사장님 검색" value={query} onChange={e => setQuery(e.target.value)} /></label>
+          <label className="review-filter">검토 상태<select value={filter} onChange={e => setFilter(e.target.value)}><option value="all">전체 상담</option>{Object.entries(REVIEW_STATES).map(([key, label]) => <option key={key} value={key}>{label}</option>)}</select></label>
+          {matches ? <button className="review-case" aria-current="true" onClick={() => { setView("summary"); document.getElementById("review-workspace")?.scrollIntoView({ behavior: "smooth", block: "start" }); }}><span>{interviewStatus}</span><strong>느티나무감자탕</strong><p>표기웅 사장님 · 음식점</p><footer><span>{REVIEW_STATES[record?.disposition ?? "PENDING"]}</span><span>{count} / 12</span></footer></button> : <p>조건에 맞는 상담이 없습니다.</p>}
+          <div className="review-directory-foot"><p>인터뷰에서 시작된 이야기,<br />검토 기록으로 이어집니다.</p><a href="/">골목으로 돌아가기 ↗</a></div>
         </aside>
-
-        {!matches ? <section className="admin-case-workspace"><p>검색어나 상태 필터를 변경해 주세요.</p></section> : <section className="admin-case-workspace" id="admin-workspace">
-          <header className="admin-case-heading">
-            <div>
-              <span className="admin-eyebrow">CASE 001 · {status}</span>
-              <h1>{scenario.persona.businessName}</h1>
-              <p>{scenario.persona.borrowerName} 사장님과 나눈 대화를 바탕으로 다음 상담을 준비합니다.</p>
-            </div>
-            <div className="admin-case-actions"><a href="/demo">인터뷰 이어보기</a><button onClick={() => { focusNote.current = true; setSelectedView("plan"); if (selectedView === "plan") { noteRef.current?.focus(); noteRef.current?.scrollIntoView({ block: "center", behavior: "smooth" }); } }}>검토 메모 남기기</button></div>
-          </header>
-
-          <div className="admin-metrics" aria-label="상담 핵심 지표">
-            <article><span>인터뷰 수집</span><strong>{completedAnswers}<small> / {scenario.questions.length}</small></strong><i><b style={{ width: `${coverage}%` }} /></i></article>
-            <article className="admin-answer-metric"><span>월평균 매출 · 답변 원문</span><p>{answerText("monthly_average_sales")}</p></article>
-            <article className="admin-answer-metric"><span>월 고정 운영비 · 답변 원문</span><p>{answerText("fixed_operating_costs")}</p></article>
-            <article className="admin-answer-metric"><span>실행 준비도 · 답변 원문</span><p>{answerText("execution_readiness")}</p></article>
-          </div>
-
-          <nav className="admin-record-tabs" aria-label="상담 검토 내용">
-            <button className={selectedView === "summary" ? "is-active" : ""} onClick={() => setSelectedView("summary")}>현황 요약</button>
-            <button className={selectedView === "answers" ? "is-active" : ""} onClick={() => setSelectedView("answers")}>상담 원문 <span>{completedAnswers}</span></button>
-            <button className={selectedView === "plan" ? "is-active" : ""} onClick={() => setSelectedView("plan")}>실행·자료 점검</button>
-          </nav>
-
-          {selectedView === "summary" && (
-            <div className="admin-summary-grid">
-              <section className="admin-panel admin-case-summary">
-                <header><div><span className="admin-eyebrow">답변에서 확인할 내용</span><h2>사장님이 말씀하신 상황과 계획</h2></div><span className="admin-review-badge">{status}</span></header>
-                <blockquote>{answerText("operating_day_drop_reason")}</blockquote>
-                <dl>
-                  <div><dt>사업 개선 계획</dt><dd>{answerText("improvement_plan")}</dd></div>
-                  <div><dt>실행 준비도</dt><dd>{answerText("execution_readiness")}</dd></div>
-                  <div><dt>향후 전망</dt><dd>{answerText("seasonality_outlook")}</dd></div>
-                </dl>
-              </section>
-
-              <section className="admin-panel admin-next-action">
-                <span className="admin-eyebrow">NEXT ACTION</span>
-                <h2>영업일 회복을<br />증빙으로 연결하기</h2>
-                <p>입력된 사유와 계획을 읽고, 확인한 증빙과 다음 상담에 필요한 내용을 기록해 주세요.</p>
-                <div><span>점검 항목</span><strong>{checkedItems.length} / {reviewItems.length}</strong></div>
-                <button onClick={() => setSelectedView("plan")}>준비 항목 점검하기 <span>→</span></button>
-              </section>
-
-              <section className="admin-panel admin-coverage">
-                <header><h2>대화 수집 현황</h2><span>{coverage}%</span></header>
-                {INTERVIEW_CATEGORIES.map((category) => {
-                  const questions = scenario.questions.filter((question) => question.category === category);
-                  const done = questions.filter((question) => answerMap.has(question.id)).length;
-                  return <div key={category}><span>{category}</span><i><b style={{ width: `${(done / questions.length) * 100}%` }} /></i><small>{done}/{questions.length}</small></div>;
-                })}
-                <p>실제로 저장된 답변만 집계합니다.</p>
-              </section>
-            </div>
-          )}
-
-          {selectedView === "answers" && (
-            <section className="admin-panel admin-transcript">
-              <header><div><span className="admin-eyebrow">INTERVIEW RECORD</span><h2>사장님 상담 원문</h2></div><p>원문을 요약하거나 평가하지 않고 질문별로 확인합니다.</p></header>
-              {scenario.questions.map((question, index) => (
-                <article key={question.id}><span>{String(index + 1).padStart(2, "0")}</span><div><small>{question.category} · {question.label}</small><h3>{question.question}</h3><blockquote>{answerText(question.id)}</blockquote></div></article>
-              ))}
-            </section>
-          )}
-
-          {selectedView === "plan" && (
-            <div className="admin-plan-grid">
-              <section className="admin-panel admin-checklist">
-                <span className="admin-eyebrow">REVIEW CHECKLIST</span><h2>다음 상담 준비 항목</h2>
-                {reviewItems.map((item) => <label key={item}><input type="checkbox" disabled={!saved || saving} checked={checkedItems.includes(item)} onChange={(event) => { dirty.current = true; setNotice("변경한 점검 항목을 저장해 주세요."); setCheckedItems((current) => event.target.checked ? [...current, item] : current.filter((entry) => entry !== item)); }} /><span>{item}<small>{checkedItems.includes(item) ? "확인됨" : "확인 필요"}</small></span></label>)}
-              </section>
-              <section className="admin-panel admin-plan-note"><span className="admin-eyebrow">담당자 메모</span><h2>상담 연결 전 확인</h2><p>인터뷰 내용은 금융 판단이 아니라 상담 준비를 위한 정성 정보입니다. 실제 금액과 기간은 증빙 원본으로 다시 확인합니다.</p><textarea ref={noteRef} disabled={!saved || saving} value={note} maxLength={5000} onChange={(e) => { dirty.current = true; setNotice("저장하지 않은 변경 사항이 있습니다."); setNote(e.target.value); }} aria-label="담당자 검토 메모" placeholder="확인할 내용이나 다음 연락 메모를 남겨주세요" rows={5} /><button disabled={!saved || saving} onClick={saveReview}>{saving ? "저장 중…" : "검토 초안 저장"}</button><p role="status">{notice}</p></section>
-            </div>
-          )}
-        </section>}
+        <section className="review-workspace" id="review-workspace">
+          <div className="review-sync" role="status">{error || (!record ? "상담 기록을 불러오고 있습니다." : record.updatedAt ? `답변 저장 ${formatDate(record.updatedAt)} · 한국 시간` : "저장된 답변이 없습니다. 인터뷰를 시작해 주세요.")}{error && <button onClick={() => void refresh()}>다시 불러오기</button>}</div>
+          {!matches ? <div className="review-empty"><h1>찾는 상담이 없어요.</h1><p>검색어나 검토 상태를 바꿔주세요.</p><button onClick={() => { setQuery(""); setFilter("all"); }}>전체 상담 보기</button></div> : <>
+            <header className="review-heading"><div><p>상담 검토 · {interviewStatus}</p><h1>느티나무감자탕</h1><span>표기웅 사장님 · 음식점</span></div><a href="/demo">인터뷰 {record?.completedAt ? "확인" : "이어보기"} <span>↗</span></a></header>
+            <div className="review-facts"><div><span>모인 답변</span><strong>{count}<small> / 12</small></strong></div><div><span>미응답</span><strong>{12 - count}<small>개</small></strong></div><div><span>담당자 검토</span><strong className="review-state-text">{REVIEW_STATES[record?.disposition ?? "PENDING"]}</strong></div></div>
+            <nav className="review-tabs" aria-label="상담 검토 내용">{views.map(([key, label], index) => <button key={key} aria-current={view === key ? "page" : undefined} onClick={() => setView(key)}><small>0{index + 1}</small>{label}</button>)}</nav>
+            {!report ? <p className="review-empty">{error ? "기록을 다시 불러온 뒤 검토할 수 있습니다." : "기록을 불러오는 중입니다."}</p> : <div className="review-view" key={view}>
+              {view === "summary" && <><div className="review-section-heading"><div><span>01 / 사업 현황</span><h2>상황과 계획을 살펴봅니다.</h2></div><p>답변을 펼치면 질문과 원문을 함께 확인할 수 있습니다.</p></div><div className="review-overview"><section>{report.evidence.filter(item => ["monthly_average_sales", "fixed_operating_costs", "operating_day_drop_reason", "improvement_plan", "execution_readiness", "seasonality_outlook"].includes(item.questionId)).map(item => <Evidence key={item.id} item={item} />)}</section><aside className="review-context"><h3>확인할 정보</h3><p>답변 {count}개 수집 · 미응답 {report.missing.length}개</p>{report.missing.length ? <ul>{report.missing.slice(0, 5).map(item => <li key={item.id}>{item.label}</li>)}</ul> : <p>답변 수집을 마쳤습니다. 금액·기간과 증빙을 확인해 주세요.</p>}{report.missing.length > 5 && <small>외 {report.missing.length - 5}개 항목</small>}<button onClick={() => setView("evidence")}>전체 답변 확인 →</button><hr /><h3>담당자 의견</h3><p className="review-note-preview">{record?.note || "아직 남긴 의견이 없습니다."}</p><button onClick={() => setView("review")}>검토 의견 남기기 →</button></aside></div><p className="review-boundary">본인 진술을 질문별로 정리한 자료입니다. 답변 수집은 증빙 확인이나 금융 평가를 의미하지 않습니다.</p></>}
+              {view === "evidence" && <><div className="review-section-heading"><div><span>02 / 답변과 근거</span><h2>사장님의 말, 그대로.</h2></div><p>각 답변에는 검토서와 연결되는 고유 근거 번호가 있습니다.</p></div>{report.coverage.map(group => <section className="review-evidence-group" key={group.category}><header><h3>{group.category}</h3><span>{group.answered} / {group.total}</span></header>{report.evidence.filter(item => item.category === group.category).map(item => <Evidence key={item.id} item={item} />)}</section>)}</>}
+              {view === "review" && <><div className="review-section-heading"><div><span>03 / 담당자 검토</span><h2>확인한 내용과 다음 할 일.</h2></div><p>저장한 의견과 점검 상태가 최종 검토서에 포함됩니다.</p></div><div className="review-editor"><section><h3>자료 점검</h3><p>직접 확인한 항목만 표시해 주세요.</p>{REVIEW_ITEMS.map(item => <label className="review-check" key={item}><input type="checkbox" disabled={busy} checked={checked.includes(item)} onChange={e => { edit(); setChecked(current => e.target.checked ? [...current, item] : current.filter(value => value !== item)); }} /><span>{item}</span><small>{checked.includes(item) ? "확인" : "대기"}</small></label>)}<p className="review-boundary">미확인 항목이 있어도 검토자료를 만들 수 있습니다.</p></section><section><label className="review-field">검토 상태<select value={disposition} disabled={busy} onChange={e => { edit(); setDisposition(e.target.value as ReviewDisposition); }}>{Object.entries(REVIEW_STATES).map(([key, label]) => <option key={key} value={key}>{label}</option>)}</select></label><label className="review-field">담당자 의견<textarea rows={7} maxLength={5000} value={note} disabled={busy} onChange={e => { edit(); setNote(e.target.value); }} placeholder="확인한 사실, 보완할 자료, 다음 상담에서 확인할 내용을 적어주세요." /></label><small>{note.length.toLocaleString()} / 5,000자 · 마지막 저장 {formatDate(record?.reviewUpdatedAt ?? null)}</small><div className="review-editor-actions"><button className="review-primary" onClick={saveReview} disabled={busy || !dirty}>{busy ? "저장 중…" : "검토 내용 저장"}</button>{dirty && <button onClick={() => { if (window.confirm("저장하지 않은 검토 변경을 버리고 서버의 기록을 불러올까요?")) { void refresh(true); setNotice(""); } }} disabled={busy}>저장된 검토 불러오기</button>}</div></section></div></>}
+              {view === "report" && <><div className="review-section-heading"><div><span>04 / 최종 검토서</span><h2>상담을 위한 한 부의 기록.</h2></div><p>원문·미응답·담당자 의견을 함께 담습니다.</p></div><div className="review-export"><div><strong>{record?.completedAt ? "인터뷰 완료본" : "진행 중 자료"}</strong><p>{dirty ? "저장하지 않은 의견이 있습니다. 담당자 검토에서 먼저 저장해 주세요." : "내려받기 직전에 서버의 최신 저장 기록을 다시 확인합니다."}</p></div><button disabled={busy || dirty || !count} onClick={() => void exportReport("json")}>JSON 받기 ↓</button><button className="review-primary" disabled={busy || dirty || !count} onClick={() => void exportReport("print")}>인쇄 · PDF</button></div>{!count && <p className="review-boundary">저장된 답변이 있어야 내보낼 수 있습니다. 아래는 빈 검토서의 미리보기입니다.</p>}<ReviewDocument report={report} /></>}
+            </div>}
+            <div className="review-notice" role="status">{notice}{dirty && view !== "review" && <button onClick={() => setView("review")}>담당자 검토로 이동 →</button>}</div>
+          </>}
+        </section>
       </div>
-    </main>
-  );
+    </div>
+    <div className="review-print">{printable && !dirty ? <ReviewDocument report={printable} /> : <p>최신 검토자료를 인쇄하려면 최종 검토서의 ‘인쇄 · PDF’를 눌러주세요. 저장하지 않은 의견이 있으면 먼저 저장해 주세요.</p>}</div>
+  </main>;
 }

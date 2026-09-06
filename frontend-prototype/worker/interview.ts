@@ -1,22 +1,31 @@
 import { OPERATING_DAY_SCENARIO as scenario } from "../app/demo/scenario";
-import { REVIEW_ITEMS } from "../app/demo/record";
+import { REVIEW_ITEMS, REVIEW_STATES, type ReviewDisposition } from "../app/demo/record";
+import { buildReviewReport } from "../app/admin/report";
 
 export async function interviewApi(request: Request, db: D1Database) {
   const json = (body: unknown, status = 200) => Response.json(body, { status, headers: { "Cache-Control": "no-store" } });
   const read = async () => {
-    const row = await db.prepare("SELECT * FROM interviews WHERE id = ?").bind(scenario.id).first<{ answers: string; revision: number; completed_at: string | null; updated_at: string | null; note: string; checklist: string }>();
-    return { answers: JSON.parse(row?.answers ?? "[]"), revision: row?.revision ?? 0, completedAt: row?.completed_at ?? null, updatedAt: row?.updated_at ?? null, note: row?.note ?? "", checklist: JSON.parse(row?.checklist ?? "[]") };
+    const row = await db.prepare("SELECT * FROM interviews WHERE id = ?").bind(scenario.id).first<{ answers: string; revision: number; completed_at: string | null; updated_at: string | null; note: string; checklist: string; disposition: ReviewDisposition; review_revision: number; review_updated_at: string | null }>();
+    return { answers: JSON.parse(row?.answers ?? "[]"), revision: row?.revision ?? 0, completedAt: row?.completed_at ?? null, updatedAt: row?.updated_at ?? null, note: row?.note ?? "", checklist: JSON.parse(row?.checklist ?? "[]"), disposition: row?.disposition ?? "PENDING" as ReviewDisposition, reviewRevision: row?.review_revision ?? 0, reviewUpdatedAt: row?.review_updated_at ?? null };
   };
   try {
+    if (new URL(request.url).pathname.endsWith("/report")) {
+      if (request.method !== "GET") return json({ error: "검토자료는 읽기만 가능합니다." }, 405);
+      return json(buildReviewReport(await read(), new Date().toISOString()));
+    }
     if (request.method === "GET") return json(await read());
     if (request.method !== "PUT") return json({ error: "지원하지 않는 요청입니다." }, 405);
     if (request.headers.get("Origin") && request.headers.get("Origin") !== new URL(request.url).origin) return json({ error: "허용되지 않은 요청입니다." }, 403);
     const raw = await request.text();
     if (raw.length > 50000) return json({ error: "입력 내용이 너무 깁니다." }, 413);
     const body = JSON.parse(raw);
+    if (!body || typeof body !== "object") return json({ error: "요청 형식이 올바르지 않습니다." }, 400);
     if (body.kind === "review") {
       if (typeof body.note !== "string" || body.note.length > 5000 || !Array.isArray(body.checklist) || body.checklist.some((v: unknown) => typeof v !== "string" || !REVIEW_ITEMS.includes(v))) return json({ error: "검토 내용을 확인해 주세요." }, 400);
-      await db.prepare("INSERT INTO interviews (id, note, checklist) VALUES (?, ?, ?) ON CONFLICT(id) DO UPDATE SET note = excluded.note, checklist = excluded.checklist").bind(scenario.id, body.note, JSON.stringify([...new Set(body.checklist)])).run();
+      if (!Object.hasOwn(REVIEW_STATES, body.disposition ?? "") || !Number.isInteger(body.reviewRevision) || body.reviewRevision < 0) return json({ error: "검토 상태를 확인하고 새로고침해 주세요." }, 400);
+      await db.prepare("INSERT INTO interviews (id) VALUES (?) ON CONFLICT(id) DO NOTHING").bind(scenario.id).run();
+      const result = await db.prepare("UPDATE interviews SET note = ?, checklist = ?, disposition = ?, review_revision = review_revision + 1, review_updated_at = ? WHERE id = ? AND review_revision = ?").bind(body.note, JSON.stringify([...new Set(body.checklist)]), body.disposition, new Date().toISOString(), scenario.id, body.reviewRevision).run();
+      if (!result.meta.changes) return json({ error: "다른 화면에서 검토 내용이 변경됐습니다. 작성한 메모를 복사한 뒤 저장된 검토를 다시 불러와 주세요." }, 409);
     } else if (body.kind === "interview") {
       if (!Array.isArray(body.answers) || body.answers.length > scenario.questions.length || !Number.isInteger(body.revision) || typeof body.complete !== "boolean" || body.answers.some((a: {questionId?: unknown; text?: unknown} | null, i: number) => !a || a.questionId !== scenario.questions[i].id || typeof a.text !== "string" || !a.text.trim() || a.text.length > 3000) || (body.complete && body.answers.length !== scenario.questions.length)) return json({ error: "답변 내용을 확인해 주세요." }, 400);
       const current = await read();

@@ -1,12 +1,12 @@
 import assert from "node:assert/strict";
 import { DatabaseSync } from "node:sqlite";
-import { readFileSync } from "node:fs";
+import { readFileSync, readdirSync } from "node:fs";
 import test from "node:test";
 import worker from "../dist/server/index.js";
 
 test("interview answers persist, validate, complete and keep review notes independently", async () => {
   const sqlite = new DatabaseSync(":memory:");
-  sqlite.exec(readFileSync(new URL("../drizzle/0000_pink_electro.sql", import.meta.url), "utf8"));
+  for (const file of readdirSync(new URL("../drizzle/", import.meta.url)).filter(file => file.endsWith(".sql")).sort()) sqlite.exec(readFileSync(new URL(`../drizzle/${file}`, import.meta.url), "utf8"));
   const DB = { prepare(sql) { let values = []; return {
     bind(...args) { values = args; return this; },
     async first() { return sqlite.prepare(sql).get(...values) ?? null; },
@@ -28,8 +28,11 @@ test("interview answers persist, validate, complete and keep review notes indepe
     assert.equal((await call({ kind: "interview", answers, revision: 0, complete: false })).status, 409);
     assert.equal((await call({ kind: "interview", answers, revision: 1, complete: true })).status, 400);
     assert.equal((await call({ kind: "interview", answers: [{questionId: "bogus", text: "test"}], revision: 1, complete: false })).status, 400);
-    assert.equal((await call({ kind: "review", note: "월 매출 증빙 확인 필요", checklist: ["매출·비용 기준 기간 확인"] })).status, 200);
+    assert.equal((await call({ kind: "review", note: "월 매출 증빙 확인 필요", checklist: ["매출·비용 기준 기간 확인"], disposition: "NEEDS_INFORMATION", reviewRevision: 0 })).status, 200);
     assert.equal((await call()).data.note, "월 매출 증빙 확인 필요");
+    assert.equal((await call()).data.disposition, "NEEDS_INFORMATION");
+    assert.equal((await call({ kind: "review", note: "stale", checklist: [], disposition: "HOLD", reviewRevision: 0 })).status, 409);
+    assert.equal((await call({ kind: "review", note: "invalid", checklist: [], disposition: "APPROVED", reviewRevision: 1 })).status, 400);
     assert.equal((await call({ kind: "review", note: "x", checklist: [] }, "https://other.test")).status, 403);
     const ids = ["fixed_operating_costs", "operating_day_drop_reason", "improvement_plan", "execution_readiness", "confirmed_reservations", "seasonality_outlook", "essential_household_expenses", "emergency_buffer_months", "platform_fee_pressure", "hall_customer_decline", "repeat_customer_share"];
     let revision = 1;
@@ -46,7 +49,22 @@ test("interview answers persist, validate, complete and keep review notes indepe
     assert.equal(final.data.note, "월 매출 증빙 확인 필요");
     assert.deepEqual(final.data.checklist, ["매출·비용 기준 기간 확인"]);
     assert.equal((await call({ kind: "interview", answers: [], revision: final.data.revision, complete: false })).status, 409);
-    assert.equal((await call({ kind: "review", note: "검토 완료", checklist: [] })).status, 200);
+    assert.equal((await call({ kind: "review", note: "검토 완료", checklist: [], disposition: "READY_FOR_REVIEW", reviewRevision: 1 })).status, 200);
     assert.ok((await call()).data.completedAt);
+    const beforeExport = (await call()).data;
+    const exported = await worker.fetch(new Request("https://example.test/api/interview/report"), { DB }, { waitUntil() {} });
+    assert.equal(exported.status, 200);
+    assert.equal(exported.headers.get("cache-control"), "no-store");
+    const report = await exported.json();
+    assert.equal(report.evidence[0].originalText, answers[0].text);
+    assert.equal(report.evidence[0].id, "answer:operating-day:monthly_average_sales");
+    assert.equal(report.evidence[0].verified, false);
+    assert.equal(report.review.disposition, "READY_FOR_REVIEW");
+    assert.equal(report.review.note, "검토 완료");
+    assert.equal(report.review.revision, 2);
+    assert.equal(report.missing.length, 0);
+    assert.equal(report.stage, "COMPLETED");
+    assert.equal(report.deliveryStatus, "NOT_SENT");
+    assert.deepEqual((await call()).data, beforeExport, "export must not mutate interview or review");
   } finally { sqlite.close(); }
 });
