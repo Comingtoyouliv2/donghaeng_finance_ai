@@ -1,5 +1,5 @@
 /* Gowun Batang, warm paper and evening charcoal extend the landing's identity. */
-.review-desk { --review-paper:#f6f2e9; --review-ink:#302d27; --review-muted:#756e62; --review-line:#d9d1c2; --review-accent:#88673b; min-height:100svh; background:var(--review-paper); color:var(--review-ink); font-family:var(--font-sans),sans-serif; font-size:16px; line-height:1.65; }
+.review-desk { --review-paper:#f6f2e9; --review-ink:#302d27; --review-muted:#756e62; --review-line:#d9d1c2; --review-accent:#88673b; min-height:100svh; background:var(--review-paper); color:var(--review-ink); font-family:var(--font-sans),sans-serif; font-size:16px; line-height:1.65; word-break:keep-all; }
 .review-desk button,.review-desk input,.review-desk select,.review-desk textarea { font:inherit; }
 .review-desk button,.review-desk a,.review-desk summary { -webkit-tap-highlight-color:transparent; }
 .review-desk button { cursor:pointer; }
@@ -16,7 +16,7 @@
 .review-case { border:0; border-left:2px solid var(--review-accent); background:#f6f2e9; padding:20px 16px; text-align:left; color:var(--review-ink); transition:background .2s; }
 .review-case:hover { background:#fffaf0; }
 .review-case>span { font-size:13px; color:var(--review-muted); }
-.review-case strong { display:block; margin-top:14px; font:700 23px/1.4 var(--font-display),serif; letter-spacing:-.05em; }
+.review-case strong { display:block; margin-top:14px; font:700 23px/1.4 var(--font-display),serif; letter-spacing:-.05em; white-space:nowrap; }
 .review-case p { margin:8px 0 24px; font-size:14px; color:var(--review-muted); }
 .review-case footer { display:flex; justify-content:space-between; border-top:1px solid var(--review-line); padding-top:12px; font-size:13px; }
 .review-directory-foot { margin-top:auto; padding-top:80px; font-size:14px; color:var(--review-muted); }
@@ -145,7 +145,7 @@
 .review-sync button { color:#d5b274; }
 .review-heading { margin:30px 0 38px; }
 .review-heading p { color:#c99b58; font-size:13px; }
-.review-heading h1 { max-width:10ch; color:#faf3e3; font-size:clamp(42px,4.7vw,68px); font-weight:400; line-height:1.14; }
+.review-heading h1 { max-width:none; color:#faf3e3; font-size:clamp(42px,4.7vw,68px); font-weight:400; line-height:1.14; white-space:nowrap; }
 .review-heading>div>span { color:#b8b09f; }
 .review-heading>a { border-color:#d4c8b3; color:#eee5d3; }
 .review-facts { grid-template-columns:auto auto minmax(180px,1fr); gap:0; padding:21px 0; border-color:var(--review-line); }
