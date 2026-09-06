@@ -30,6 +30,11 @@ test("existing records survive the review migration; partial reports preserve mi
     assert.equal(report.review.revision, 0);
     assert.equal(report.review.checklist[0].checked, true);
     assert.equal(report.coverage.reduce((sum, group) => sum + group.answered, 0), 1);
+    assert.equal(report.analysis.dictionarySize, 100);
+    assert.equal(report.analysis.features.length, 100);
+    assert.equal(report.analysis.features.find(item => item.name === "fin_sales_avg_3m").state, "MISSING");
+    assert.equal(report.analysis.features.find(item => item.name === "crd_credit_score").value, null);
+    assert.equal(report.analysis.snapshotHash, (await (await worker.fetch(new Request("https://example.test/api/interview/report"), {DB}, {})).json()).analysis.snapshotHash);
     assert.equal(JSON.stringify(report).includes("2600만원"), false);
     assert.equal((await worker.fetch(new Request("https://example.test/api/interview/report", {method:"PUT"}), {DB}, {})).status, 405);
 

@@ -34,6 +34,17 @@ test("interview answers persist, validate, complete and keep review notes indepe
     assert.equal((await call({ kind: "review", note: "stale", checklist: [], disposition: "HOLD", reviewRevision: 0 })).status, 409);
     assert.equal((await call({ kind: "review", note: "invalid", checklist: [], disposition: "APPROVED", reviewRevision: 1 })).status, 400);
     assert.equal((await call({ kind: "review", note: "x", checklist: [] }, "https://other.test")).status, 403);
+    const workspace = await call({ kind: "workspace", planChoice: "operating-days", institutionId: "koreg", preparationDocuments: ["매출·비용 증빙 확인"], preparationOwner: "사장님 + 담당 상담사", reviewPeriod: "2주 후 점검", preparationReviewed: true, workspaceRevision: 0 });
+    assert.equal(workspace.status, 200);
+    assert.equal(workspace.data.workspace.planChoice, "operating-days");
+    assert.equal(workspace.data.workspace.institutionId, "koreg");
+    assert.equal(workspace.data.workspace.revision, 1);
+    assert.equal((await call({ kind: "workspace", planChoice: null, institutionId: null, preparationDocuments: [], preparationOwner: "사장님 + 담당 상담사", reviewPeriod: "2주 후 점검", preparationReviewed: false, workspaceRevision: 0 })).status, 409);
+    const execution = await call({ kind: "execution", date: "2026-09-06", title: "주말 보조 인력 공고 등록", note: "지원자 확인 예정", workspaceRevision: 1 });
+    assert.equal(execution.status, 200);
+    assert.equal(execution.data.workspace.executionRecords.length, 1);
+    assert.equal(execution.data.workspace.revision, 2);
+    assert.equal((await call({ kind: "execution", date: "bad", title: "x", note: "", workspaceRevision: 2 })).status, 400);
     const ids = ["fixed_operating_costs", "operating_day_drop_reason", "improvement_plan", "execution_readiness", "confirmed_reservations", "seasonality_outlook", "essential_household_expenses", "emergency_buffer_months", "platform_fee_pressure", "hall_customer_decline", "repeat_customer_share"];
     let revision = 1;
     for (const id of ids) {
@@ -65,6 +76,11 @@ test("interview answers persist, validate, complete and keep review notes indepe
     assert.equal(report.missing.length, 0);
     assert.equal(report.stage, "COMPLETED");
     assert.equal(report.deliveryStatus, "NOT_SENT");
+    assert.equal(report.analysis.dictionarySize, 100);
+    assert.equal(report.analysis.features.length, 100);
+    assert.equal(report.analysis.features.find(item => item.name === "crd_credit_score").state, "MISSING");
+    assert.equal(report.recovery.executionRecords.length, 1);
+    assert.equal(report.consultation.institutionId, "koreg");
     assert.deepEqual((await call()).data, beforeExport, "export must not mutate interview or review");
   } finally { sqlite.close(); }
 });

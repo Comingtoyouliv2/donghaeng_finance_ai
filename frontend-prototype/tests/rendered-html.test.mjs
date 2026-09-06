@@ -31,7 +31,7 @@ test("server-renders the Donghaeng Finance journey", async () => {
   const html = await response.text();
   assert.match(html, /<title>동행금융 \| 다시 금융과 만나는 세 걸음<\/title>/i);
   assert.match(html, /다시 문을 여는 길/);
-  assert.match(html, /퀘스트 0 \/ 3/);
+  assert.doesNotMatch(html, /퀘스트 0 \/ 3/);
   assert.match(html, /최근 매출이 줄어든 가장 큰 이유/);
   assert.match(html, /상황을 말로 풀어내기/);
   assert.match(html, /현금흐름 습관 만들기/);
@@ -48,13 +48,15 @@ test("keeps the three-mission experience and demo route connected", async () => 
     readFile(new URL("../app/demo/page.tsx", import.meta.url), "utf8"),
   ]);
 
-  assert.equal((page.match(/title:/g) ?? []).length, 3);
-  assert.equal((page.match(/question:/g) ?? []).length, 3);
-  assert.equal((page.match(/reward:/g) ?? []).length, 3);
+  const missionSource = page.slice(0, page.indexOf("export default function"));
+  assert.equal((missionSource.match(/title:/g) ?? []).length, 3);
+  assert.equal((missionSource.match(/question:/g) ?? []).length, 3);
+  assert.equal((missionSource.match(/reward:/g) ?? []).length, 3);
   assert.match(page, /answerQuest/);
   assert.match(page, /router\.push\("\/demo"\)/);
   assert.match(scene, /donghaeng:progress/);
   assert.match(scene, /CatmullRomCurve3/);
   assert.match(layout, /동행금융 \| 다시 금융과 만나는 세 걸음/);
-  assert.match(demo, /동행금융 홈페이지로 돌아가기/);
+  assert.match(demo, /퀘스트 길로 돌아가기/);
+  assert.match(demo, /WorkspaceTopbar active="interview"/);
 });
