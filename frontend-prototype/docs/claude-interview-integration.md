@@ -16,7 +16,7 @@
 
 ## 개인정보와 운영
 
-- 화면에서 Claude 처리에 동의한 답변만 Anthropic Messages API로 보낸다.
+- 인터뷰에서 답변을 보내면 다음 질문을 준비하기 위해 Anthropic Messages API를 호출한다.
 - `ANTHROPIC_API_KEY`는 서버 환경 변수로만 읽고 브라우저 코드나 저장소에 포함하지 않는다.
 - 요청에는 현재 질문 프레임워크와 최근 답변 다섯 개만 포함한다.
 - 기본 모델은 `claude-sonnet-5`, 제한 시간은 8초, 최대 출력은 450토큰이다.

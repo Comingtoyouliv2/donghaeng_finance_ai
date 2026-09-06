@@ -5,7 +5,6 @@ const firstAnswer = {
   currentQuestionId: "monthly_average_sales",
   answer: "최근 3개월 월평균 매출은 2600만원입니다.",
   answers: [{ questionId: "monthly_average_sales", text: "최근 3개월 월평균 매출은 2600만원입니다." }],
-  consent: false,
 };
 
 async function worker() {
@@ -14,7 +13,7 @@ async function worker() {
   return (await import(url.href)).default;
 }
 
-test("interview turn keeps the scenario sequence when Claude consent is off", async () => {
+test("interview turn keeps the scenario sequence when Claude is not configured", async () => {
   const app = await worker();
   const response = await app.fetch(new Request("https://example.test/api/interview/turn", {
     method: "POST",
@@ -24,6 +23,7 @@ test("interview turn keeps the scenario sequence when Claude consent is off", as
   assert.equal(response.status, 200);
   const result = await response.json();
   assert.equal(result.provider, "framework");
+  assert.equal(result.configured, false);
   assert.equal(result.nextQuestionId, "fixed_operating_costs");
   assert.match(result.nextQuestion, /운영비/);
 });
@@ -68,7 +68,7 @@ test("interview turn applies Claude wording only for the server-selected next qu
     const response = await app.fetch(new Request("https://example.test/api/interview/turn", {
       method: "POST",
       headers: { "Content-Type": "application/json", Origin: "https://example.test" },
-      body: JSON.stringify({ ...firstAnswer, consent: true }),
+      body: JSON.stringify(firstAnswer),
     }), { ASSETS: { fetch: async () => new Response("Not found", { status: 404 }) } }, { waitUntil() {}, passThroughOnException() {} });
     assert.equal(response.status, 200);
     const result = await response.json();

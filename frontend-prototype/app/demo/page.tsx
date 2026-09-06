@@ -23,7 +23,6 @@ export default function DemoPage() {
   const [answers, setAnswers] = useState<AcceptedAnswer[]>([]);
   const [managerReplies, setManagerReplies] = useState<Record<string, InterviewTurnResponse>>({});
   const [adaptiveQuestion, setAdaptiveQuestion] = useState<string | null>(null);
-  const [aiConsent, setAiConsent] = useState(false);
   const [answer, setAnswer] = useState("");
   const [isReplying, setIsReplying] = useState(false);
   const [checked, setChecked] = useState(false);
@@ -97,7 +96,7 @@ export default function DemoPage() {
       setAnswer("");
       setChecked(false);
       setIsReplying(true);
-      const turn = await requestInterviewTurn({ currentQuestionId: current.id, answer: message, answers: record.answers, consent: aiConsent });
+      const turn = await requestInterviewTurn({ currentQuestionId: current.id, answer: message, answers: record.answers });
       setManagerReplies((replies) => ({ ...replies, [current.id]: turn }));
       const next = questions[record.answers.length];
       setAdaptiveQuestion(turn.nextQuestionId === next?.id ? turn.nextQuestion : null);
@@ -191,7 +190,6 @@ export default function DemoPage() {
           <footer className="reply-dock">
             {current && !isReplying ? (
               <>
-                <label className="consultation-ai-consent"><input type="checkbox" checked={aiConsent} onChange={(event) => setAiConsent(event.target.checked)} /><span>Claude가 이 답변을 읽고 다음 질문을 자연스럽게 준비하도록 허용합니다.</span></label>
                 <div className="scenario-reply" aria-label="시나리오 답변">
                   <span>시연 답변</span>
                   <button type="button" disabled={!ready || saving} className={answer === current.suggestedAnswer ? "selected" : ""} onClick={() => setAnswer(current.suggestedAnswer)}>{current.suggestedAnswer}</button>

@@ -9,7 +9,6 @@ export interface InterviewTurnRequest {
   currentQuestionId: string;
   answer: string;
   answers: InterviewTurnAnswer[];
-  consent: boolean;
 }
 
 export interface InterviewTurnResponse {
@@ -76,7 +75,7 @@ function validAnswers(answers: InterviewTurnAnswer[]): boolean {
 export function validateInterviewTurnRequest(value: unknown): value is InterviewTurnRequest {
   if (!value || typeof value !== "object") return false;
   const input = value as Partial<InterviewTurnRequest>;
-  if (typeof input.currentQuestionId !== "string" || typeof input.answer !== "string" || typeof input.consent !== "boolean" || !Array.isArray(input.answers)) return false;
+  if (typeof input.currentQuestionId !== "string" || typeof input.answer !== "string" || !Array.isArray(input.answers)) return false;
   if (input.answer.trim().length < 1 || input.answer.length > 3000 || !validAnswers(input.answers)) return false;
   const current = OPERATING_DAY_SCENARIO.questions[input.answers.length - 1];
   return current?.id === input.currentQuestionId && input.answers[input.answers.length - 1]?.text === input.answer;
@@ -84,7 +83,7 @@ export function validateInterviewTurnRequest(value: unknown): value is Interview
 
 export async function createInterviewTurn(input: InterviewTurnRequest, options: TurnOptions = {}): Promise<InterviewTurnResponse> {
   const apiKey = options.apiKey?.trim() ?? "";
-  if (!input.consent || !apiKey) return frameworkTurn(input.currentQuestionId, Boolean(apiKey));
+  if (!apiKey) return frameworkTurn(input.currentQuestionId);
 
   const questions = OPERATING_DAY_SCENARIO.questions;
   const currentIndex = questions.findIndex((question) => question.id === input.currentQuestionId);
