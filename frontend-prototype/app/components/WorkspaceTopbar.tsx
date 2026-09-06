@@ -22,7 +22,7 @@ export default function WorkspaceTopbar({ active }: WorkspaceTopbarProps) {
     event.preventDefault();
     if (movingTo || target === active) return;
     setMovingTo(target);
-    window.setTimeout(() => window.location.assign(destination), 260);
+    window.setTimeout(() => window.location.assign(destination), 400);
   }
 
   return (
@@ -30,7 +30,12 @@ export default function WorkspaceTopbar({ active }: WorkspaceTopbarProps) {
       <a href="/" className="workspace-topbar-brand" onClick={(event) => navigate(event, "/")}>
         동행금융
       </a>
-      <nav aria-label="주요 화면" data-active={visualActive} aria-busy={Boolean(movingTo)}>
+      <nav
+        aria-label="주요 화면"
+        data-active={visualActive}
+        data-moving-to={movingTo ?? undefined}
+        aria-busy={Boolean(movingTo)}
+      >
         <span className="workspace-nav-indicator" aria-hidden="true" />
         <a
           href="/admin"

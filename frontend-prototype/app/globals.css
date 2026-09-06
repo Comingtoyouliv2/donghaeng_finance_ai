@@ -588,11 +588,16 @@ a,button { font:inherit; } a { color:inherit; } button { cursor:pointer; }
 .workspace-topbar { position:relative; z-index:30; display:grid; width:100vw; min-height:72px; grid-template-columns:1fr auto; align-items:center; margin-left:calc(50% - 50vw); padding:0 clamp(24px,4vw,68px); border-bottom:1px solid #cad4c7; background:#f8faf5; color:#173a32; }
 .workspace-topbar-brand { color:#173a32; font-family:var(--font-display),"Batang",serif; font-size:21px; font-weight:760; letter-spacing:-.055em; text-decoration:none; }
 .workspace-topbar nav { position:relative; display:grid; width:292px; height:46px; grid-template-columns:repeat(2,minmax(0,1fr)); align-items:stretch; padding:4px; border:1px solid #d3ddd0; border-radius:5px; background:#eef2ec; }
-.workspace-nav-indicator { position:absolute; top:4px; bottom:4px; left:4px; width:calc((100% - 8px)/2); border:1px solid #c3d0c1; border-radius:3px; background:#fffef9; box-shadow:0 3px 10px rgba(33,77,64,.08); transform:translateX(0); transition:transform .26s cubic-bezier(.2,.8,.2,1); }
+.workspace-nav-indicator { position:absolute; top:4px; bottom:4px; left:4px; width:calc((100% - 8px)/2); border:1px solid #c3d0c1; border-radius:3px; background:#fffef9; box-shadow:0 3px 10px rgba(33,77,64,.08); transform:translateX(0); }
 .workspace-topbar nav[data-active="interview"] .workspace-nav-indicator { transform:translateX(100%); }
+.workspace-topbar nav[data-moving-to="admin"] .workspace-nav-indicator { animation:workspace-box-to-admin .38s cubic-bezier(.55,0,.2,1) forwards; }
+.workspace-topbar nav[data-moving-to="interview"] .workspace-nav-indicator { animation:workspace-box-to-interview .38s cubic-bezier(.55,0,.2,1) forwards; }
+@keyframes workspace-box-to-admin { 0% { width:calc((100% - 8px)/2); transform:translateX(100%); } 52% { width:calc(100% - 8px); transform:translateX(0); } 100% { width:calc((100% - 8px)/2); transform:translateX(0); } }
+@keyframes workspace-box-to-interview { 0% { width:calc((100% - 8px)/2); transform:translateX(0); } 52% { width:calc(100% - 8px); transform:translateX(0); } 100% { width:calc((100% - 8px)/2); transform:translateX(100%); } }
 .workspace-topbar nav a { position:relative; z-index:1; display:grid; min-width:0; place-items:center; color:#718078; font-size:12px; font-weight:650; text-decoration:none; transition:color .18s ease; }
 .workspace-topbar nav a:hover { color:#315548; }
 .workspace-topbar nav[data-active="admin"] a[href="/admin"],.workspace-topbar nav[data-active="interview"] a[href="/demo"] { color:#173a32; font-weight:760; }
+@media (prefers-reduced-motion:reduce) { .workspace-topbar nav[data-moving-to] .workspace-nav-indicator { animation-duration:.01ms; } }
 .consultation-chat .consultation-thread-shell { border-radius:8px; box-shadow:0 18px 46px rgba(33,58,48,.09); }
 .consultation-chat .phone-header { background:#fffefa; }
 .consultation-chat .spoken.current>div { border:0; border-left:3px solid #78977d; border-radius:2px; background:#f3f5ef; }
