@@ -175,7 +175,7 @@ export default function DemoPage() {
                 <div className="consultation-exchange" key={item.questionId}>
                   <div className="spoken incoming compact"><Image src="/interviewer-yujin.png" alt="" width={42} height={42} /><div><p>{question.question}</p><small>{question.label}</small></div></div>
                   <div className="spoken outgoing"><p>{item.text}</p><small>{scenario.persona.borrowerName} 사장님</small></div>
-                  {managerReplies[item.questionId] && <div className="spoken incoming compact consultation-manager-reply"><Image src="/interviewer-yujin.png" alt="" width={42} height={42} /><div><p>{managerReplies[item.questionId].acknowledgement}</p><small>{managerReplies[item.questionId].provider === "claude" ? "Claude로 정리한 응답" : managerReplies[item.questionId].configured ? "질문 기준선으로 안전하게 이어진 응답" : "Claude 연결 전 · 질문 기준선 응답"}</small></div></div>}
+                  {managerReplies[item.questionId] && <div className="spoken incoming compact consultation-manager-reply"><Image src="/interviewer-yujin.png" alt="" width={42} height={42} /><div><p>{managerReplies[item.questionId].acknowledgement}</p></div></div>}
                 </div>
               );
             })}

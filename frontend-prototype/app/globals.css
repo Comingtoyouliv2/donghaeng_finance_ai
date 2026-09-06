@@ -790,7 +790,6 @@ a,button { font:inherit; } a { color:inherit; } button { cursor:pointer; }
 .consultation-chat .chat-typing { border-radius:0; background:transparent!important; }
 .consultation-chat .consultation-manager-reply { margin:0; }
 .consultation-chat .consultation-manager-reply>div { border-left:1px solid #a77d3e; }
-.consultation-chat .consultation-manager-reply small { color:#927549; }
 .consultation-chat .reply-dock { padding:14px clamp(16px,2.4vw,32px) 18px; border-color:#cfc5b4; background:#e9e0d1; }
 .consultation-chat .scenario-reply { grid-template-columns:84px 1fr; margin-bottom:12px; }
 .consultation-chat .scenario-reply>span { color:#80623a; }
