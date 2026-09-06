@@ -4,6 +4,7 @@ import { lazy, Suspense, useCallback, useEffect, useRef, useState } from "react"
 import type { CSSProperties } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { nextUnansweredQuest } from "./quest-flow";
 
 const AlleyHopeJourney = lazy(() => import("./components/AlleyHopeJourney"));
 
@@ -56,7 +57,7 @@ export default function Home() {
   }, [answers]);
 
   const startInterview = useCallback(() => {
-    if (leavingRef.current) return;
+    if (leavingRef.current || !answersRef.current.every(Boolean)) return;
     leavingRef.current = true;
     try {
       const evidence = missions.map((item, index) => ({
@@ -79,27 +80,27 @@ export default function Home() {
 
   const answerQuest = useCallback((choice: string) => {
     const questIndex = mission;
-    setAnswers((current) => {
-      const next = [...current];
-      next[questIndex] = choice;
-      answersRef.current = next;
-      return next;
-    });
-    setReward(questIndex === missions.length - 1 ? "상담 준비 완료" : missions[questIndex].reward);
+    const nextAnswers = [...answersRef.current];
+    nextAnswers[questIndex] = choice;
+    answersRef.current = nextAnswers;
+    setAnswers(nextAnswers);
+    const allComplete = nextAnswers.every(Boolean);
+    setReward(allComplete ? "상담 준비 완료" : missions[questIndex].reward);
     if (rewardTimerRef.current) window.clearTimeout(rewardTimerRef.current);
     rewardTimerRef.current = window.setTimeout(() => {
       setReward(null);
       setIsQuestOpen(false);
-      if (questIndex < missions.length - 1) {
-        scrollToQuest(questIndex + 1);
-      } else {
+      const nextQuest = nextUnansweredQuest(answersRef.current, questIndex);
+      if (nextQuest === -1) {
         startInterview();
+      } else {
+        scrollToQuest(nextQuest);
       }
-    }, questIndex === missions.length - 1 ? 1100 : 850);
+    }, allComplete ? 1100 : 850);
   }, [mission, scrollToQuest, startInterview]);
 
   const handleArrival = useCallback(() => {
-    const missingQuest = answers.findIndex((answer) => !answer);
+    const missingQuest = nextUnansweredQuest(answers);
     if (missingQuest === -1) {
       startInterview();
       return;
@@ -139,7 +140,6 @@ export default function Home() {
         <header className="mission-road-nav">
           <Link href="/" className="mission-road-brand" aria-label="동행금융 첫 화면으로" onClick={(event) => { event.preventDefault(); window.location.assign("/"); }}>동행금융</Link>
           <div className="mission-road-nav-actions">
-            <p>{`퀘스트 ${completedQuests} / ${missions.length} · 회복 근거 수집 중`}</p>
             <a href="/admin">관리자</a>
           </div>
         </header>
@@ -260,10 +260,10 @@ export default function Home() {
           <p>가게의 불이 다시 켜졌습니다.</p>
           <h2>빛을 따라<br />새로운 시작으로.</h2>
           <button type="button" onClick={handleArrival} disabled={isLeaving || progress <= 0.88}>
-            {isLeaving ? "카페 안으로 들어가는 중" : completedQuests === missions.length ? "본 인터뷰 시작하기" : `남은 퀘스트 ${missions.length - completedQuests}개`}
-            <span aria-hidden="true">→</span>
+            {isLeaving ? "카페 안으로 들어가는 중" : completedQuests === missions.length ? "본 인터뷰 시작하기" : "놓친 퀘스트로 돌아가기"}
+            <span aria-hidden="true">{completedQuests === missions.length ? "→" : "←"}</span>
           </button>
-          <small>{completedQuests === missions.length ? "세 가지 회복 근거를 모두 모았습니다. 카페 안에서 더 자세한 AI 인터뷰를 이어갑니다." : "골목의 질문에 답해 세 가지 회복 근거를 모아주세요. 대출 승인이 아닌 다음 금융 상담의 준비를 돕습니다."}</small>
+          <small>{completedQuests === missions.length ? "세 가지 회복 근거를 모두 모았습니다. 카페 안에서 더 자세한 AI 인터뷰를 이어갑니다." : "퀘스트를 놓치셨어요. 돌아가서 남은 퀘스트를 진행해 주세요."}</small>
         </section>
 
         <div className="mission-road-transition" aria-hidden="true"><i /><span /></div>
