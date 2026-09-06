@@ -5,12 +5,6 @@
 .review-desk button { cursor:pointer; }
 .review-desk button:disabled { cursor:not-allowed; opacity:.45; }
 .review-desk :focus-visible { outline:2px solid var(--review-accent); outline-offset:4px; }
-.review-desk .workspace-topbar { width:100%; margin:0; min-height:86px; background:#302e28; border-bottom:1px solid #4e483c; color:#faf4e5; }
-.review-desk .workspace-topbar-brand { color:#faf4e5; font-size:29px; font-weight:700; }
-.review-desk .workspace-topbar nav { background:#24231f; border-color:#5a5448; width:330px; height:48px; }
-.review-desk .workspace-nav-indicator { background:#f1eadb; border-color:#f1eadb; box-shadow:none; }
-.review-desk .workspace-topbar nav a { font-size:14px; color:#bfb7a6; }
-.review-desk .workspace-topbar nav a[aria-current=page] { color:#302d27; }
 .review-layout { display:grid; grid-template-columns:258px minmax(0,1fr); min-height:calc(100svh - 86px); }
 .review-directory { padding:35px 24px; background:#ebe5d8; border-right:1px solid var(--review-line); display:flex; flex-direction:column; gap:22px; }
 .review-directory-title { display:flex; justify-content:space-between; align-items:center; }
